@@ -1310,7 +1310,7 @@
               <input class="field" data-request-comment maxlength="500" value="${escapeHTML(item.comment)}" placeholder="Information pour le client">
             </label>
           </div>
-          <div class="item-actions"><button class="primary-action" data-save-paddock-request="${item.id}">Enregistrer</button></div>
+          <div class="item-actions"><button class="primary-action" data-save-paddock-request="${item.id}">Enregistrer</button><button class="danger" data-delete-paddock-request="${item.id}">Supprimer</button></div>
         </article>
       `).join("") || `<div class="prototype-warning">Aucune demande de mise au paddock.</div>`;
     }
@@ -1462,8 +1462,14 @@
 
       const label = `${item.name} - ${paddockLabel(item.paddock)} - ${formatDate(item.date)} - ${item.time}`;
       if (!confirm(`Annuler cette reservation ?\n\n${label}`)) return;
-
-      try { await paddockAdminApi("/api/admin/paddocks/reservations/" + encodeURIComponent(id), { method: "DELETE" }); await loadD1Paddocks(); showToast("Réservation annulée."); } catch (error) { showToast(error.message); }
+      const comment = prompt("Commentaire envoyé au client (facultatif) :", "") ?? null;
+      if (comment === null) return;
+      try {
+        const result=await paddockAdminApi("/api/admin/paddocks/reservations/" + encodeURIComponent(id), { method: "DELETE", body: JSON.stringify({comment:comment.trim()}) });
+        await loadD1Paddocks();
+        if(result.email?.sent||result.email?.duplicate)showToast("Réservation annulée et e-mail envoyé.");
+        else showToast("Réservation annulée, mais e-mail non envoyé : "+(result.email?.error||"adresse absente"));
+      } catch (error) { showToast(error.message); }
     }
 
     async function saveRestriction() {
@@ -1587,6 +1593,16 @@
           })
           .catch((error) => showToast(error.message))
           .finally(() => { requestButton.disabled = false; });
+      }
+
+      const deleteRequestButton = event.target.closest("[data-delete-paddock-request]");
+      if (deleteRequestButton) {
+        const id=deleteRequestButton.dataset.deletePaddockRequest;
+        if(confirm("Supprimer définitivement cette demande ? Elle disparaîtra aussi chez l’utilisateur.")){
+          paddockAdminApi("/api/admin/paddocks/requests/"+encodeURIComponent(id),{method:"DELETE"})
+            .then(result=>{showToast(result.creditRestored?"Demande supprimée et unité restituée.":"Demande supprimée.");return loadD1Paddocks();})
+            .catch(error=>showToast(error.message));
+        }
       }
 
       const deleteRestrictionButton = event.target.closest("[data-delete-restriction]");
