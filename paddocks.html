@@ -1550,8 +1550,11 @@
     setSelectedDate(offsetDate(0));
     refreshViews();
     loadD1Paddocks();
-    setInterval(loadD1Paddocks, 5000);
+    window.addEventListener("pwa-data-changed", (event) => {
+      if (event.detail?.type === "paddocks" || event.detail?.type === "all") loadD1Paddocks();
+    });
   </script>
+  <script src="assets/js/status-realtime.js?v=20260716-3"></script>
   <script src="assets/js/backstage-shell.js?v=20260716-1"></script>
 </body>
 </html>
