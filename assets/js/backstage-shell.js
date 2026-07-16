@@ -7,6 +7,7 @@
     ["Horaires","administration.html?section=general","🕘"],
     ["Alertes","administration.html?section=home-alert","⚠️"],
     ["Utilisateurs","users.html","👤"],
+    ["Commandes","orders.html","🧾"],
     ["Paramètres","administration.html?section=settings","⚙️"]
   ];
   const button=document.createElement("button");

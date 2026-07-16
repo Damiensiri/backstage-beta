@@ -18,7 +18,7 @@
     elements.list.replaceChildren(...users.map(user=>{
       const row=document.createElement("article");row.className="user-row";
       const copy=document.createElement("div");const name=document.createElement("strong");name.textContent=`${user.firstName} ${user.lastName}`;
-      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=`${user.email} · ${user.role} · ${user.status}${user.paddockCard?` · carte ${user.paddockCard.remaining}/${user.paddockCard.total}`:" · sans carte"}${user.paddockInvoiceCount?` · ${"🌿".repeat(Math.min(user.paddockInvoiceCount,5))} ${user.paddockInvoiceCount} à facturer`:""}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
+      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=`${user.email} · ${user.role} · ${user.status}${user.paddockCard?` · carte ${user.paddockCard.remaining}/${user.paddockCard.total}`:" · sans carte"}${user.paddockInvoiceCount?` · ${"🌿".repeat(Math.min(user.paddockInvoiceCount,5))} ${user.paddockInvoiceCount} à facturer`:""}${user.orderDue?` · commandes à facturer ${Number(user.orderDue).toLocaleString("fr-FR",{maximumFractionDigits:2})} €`:""}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
       copy.onclick=()=>openDetails(user);
       const actions=document.createElement("div");actions.className="user-actions";
       const role=document.createElement("select");role.setAttribute("aria-label","Rôle de "+user.firstName);
@@ -37,7 +37,7 @@
     try{renderDetails(await api(`/api/admin/users/${user.id}/details`));}catch(error){elements.modalBody.innerHTML=`<p class="status error">${escapeHTML(error.message)}</p>`;}
   }
   function renderDetails(data){
-    const user=data.user,card=data.card,usages=data.usages||[];
+    const user=data.user,card=data.card,usages=data.usages||[],orders=data.orders||[];
     elements.modalBody.innerHTML=`
       <div class="detail-block"><h3>Compte</h3><p>${escapeHTML(user.email)}</p><p>Rôle : ${escapeHTML(user.role)} · Statut : ${escapeHTML(user.status)}</p></div>
       <div class="detail-block"><h3>Carte paddock</h3>
@@ -47,6 +47,9 @@
       </div>
       <div class="detail-block"><h3>Consommations et facturation</h3><div class="usage-list">
         ${usages.map(item=>`<div class="usage-row"><span class="${item.mode==="invoice"?"leaf":""}">${item.mode==="invoice"?"🌿 À facturer":"Carte débitée"} · ${formatDate(item.date)}</span><button class="danger" data-delete-usage="${item.id}">${item.mode==="invoice"?"Facturé · supprimer":"Annuler"}</button></div>`).join("")||'<p class="empty">Aucune consommation.</p>'}
+      </div></div>
+      <div class="detail-block"><h3>Commandes à facturer</h3><p><strong>${Number(data.orderDue||0).toLocaleString("fr-FR",{maximumFractionDigits:2})} €</strong></p><div class="usage-list">
+        ${orders.filter(order=>!order.billed&&!['refused','cancelled'].includes(order.status)).map(order=>`<div class="usage-row"><span>#${escapeHTML(order.publicId)} · ${order.items.map(item=>`${escapeHTML(item.name)} × ${item.quantity}`).join(', ')}</span><strong>${Number(order.total).toLocaleString("fr-FR",{maximumFractionDigits:2})} €</strong></div>`).join('')||'<p class="empty">Aucune commande à facturer.</p>'}
       </div></div>`;
     byId("saveDetailCard").onclick=()=>saveCard(user.id);
     if(byId("deleteDetailCard"))byId("deleteDetailCard").onclick=()=>deleteCard(user.id);
@@ -57,7 +60,7 @@
     const total=Number(byId("detailCardTotal").value),remaining=Number(byId("detailCardRemaining").value);
     try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"PUT",body:JSON.stringify({total,remaining})});status(elements.connection,"Carte paddock enregistrée.","success");await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}
   }
-  async function deleteCard(userId){if(!confirm("Supprimer cette carte paddock ? L’historique reste conservé."))return;try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
+  async function deleteCard(userId){if(!confirm("Supprimer cette carte paddock et ses consommations liées ?"))return;try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
   async function deleteUsage(userId,usageId){if(!confirm("Supprimer cette ligne ? Une unité sera restituée si elle provenait de la carte."))return;try{await api(`/api/admin/users/${userId}/paddock-usages/${usageId}`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
   async function load(){status(elements.connection,"Chargement…");try{const users=await api("/api/admin/users");localStorage.setItem("notifications_beta_api_url",elements.apiUrl.value.trim());localStorage.setItem("notifications_beta_admin_token",elements.token.value);render(users);status(elements.connection,`${users.length} compte(s) bêta.`,"success");}catch(error){status(elements.connection,error.message,"error");}}
   async function changeStatus(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({status:user.status==="active"?"disabled":"active"})});await load();}catch(error){status(elements.connection,error.message,"error");}}
