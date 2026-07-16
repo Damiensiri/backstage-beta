@@ -1,0 +1,9 @@
+{
+  "name": "Backstage Écurie D. Siri — Bêta",
+  "short_name": "Backstage Bêta",
+  "start_url": "/backstage-beta/",
+  "scope": "/backstage-beta/",
+  "display": "standalone",
+  "background_color": "#090b0f",
+  "theme_color": "#090b0f"
+}

@@ -7,7 +7,7 @@ const administration=fs.readFileSync("administration.html","utf8");
 const adminScript=fs.readFileSync("assets/js/administration.js","utf8");
 const realtime=fs.readFileSync("assets/js/status-realtime.js","utf8");
 const shell=fs.readFileSync("assets/js/backstage-shell.js","utf8");
-const pushSettings=fs.readFileSync("assets/js/firebase-push-settings.js","utf8");
+const pushSettings=fs.readFileSync("assets/js/backstage-push.js","utf8");
 const users=fs.readFileSync("assets/js/users.js","utf8");
 const usersPage=fs.readFileSync("users.html","utf8");
 
@@ -53,9 +53,11 @@ test("l’éditeur des espaces est une fenêtre modale",()=>{
   assert.match(adminScript,/document\.body\.classList\.add\("space-editor-open"\)/);
 });
 
-test("le réglage des notifications Firebase est déplacé et verrouillé en bêta",()=>{
+test("les notifications Backstage utilisent OneSignal et l’API Cloudflare bêta",()=>{
   assert.doesNotMatch(paddocks,/id="enablePushBtn"/);
   assert.match(administration,/id="enablePushBtn"/);
-  assert.match(pushSettings,/const FIREBASE_PUSH_READ_ONLY=true;/);
-  assert.match(pushSettings,/if\(FIREBASE_PUSH_READ_ONLY\)/);
+  assert.match(administration,/OneSignalSDK\.page\.js/);
+  assert.doesNotMatch(administration,/firebase/i);
+  assert.match(pushSettings,/api\/admin\/push\/subscription/);
+  assert.match(pushSettings,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
 });
