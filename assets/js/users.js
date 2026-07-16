@@ -1,8 +1,9 @@
 (function(){
   const byId=id=>document.getElementById(id);
   const elements={apiUrl:byId("apiUrl"),token:byId("adminToken"),connect:byId("connectBtn"),connection:byId("connectionStatus"),
-    form:byId("userForm"),firstName:byId("firstName"),lastName:byId("lastName"),email:byId("email"),cardNumber:byId("cardNumber"),
-    role:byId("role"),password:byId("temporaryPassword"),createStatus:byId("createStatus"),refresh:byId("refreshBtn"),list:byId("usersList")};
+    form:byId("userForm"),firstName:byId("firstName"),lastName:byId("lastName"),email:byId("email"),
+    role:byId("role"),password:byId("temporaryPassword"),createStatus:byId("createStatus"),refresh:byId("refreshBtn"),list:byId("usersList"),
+    modal:byId("userDetailsModal"),modalTitle:byId("userDetailsTitle"),modalBody:byId("userDetailsBody"),modalClose:byId("closeUserDetails")};
   elements.apiUrl.value=localStorage.getItem("notifications_beta_api_url")||"https://ecurie-notifications-beta.damiensiri-pro.workers.dev";
   elements.token.value=localStorage.getItem("notifications_beta_admin_token")||"";
   function status(element,message,type=""){element.textContent=message;element.className="status"+(type?" "+type:"");}
@@ -17,20 +18,52 @@
     elements.list.replaceChildren(...users.map(user=>{
       const row=document.createElement("article");row.className="user-row";
       const copy=document.createElement("div");const name=document.createElement("strong");name.textContent=`${user.firstName} ${user.lastName}`;
-      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=`${user.email} · ${user.role} · ${user.status}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
+      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=`${user.email} · ${user.role} · ${user.status}${user.paddockCard?` · carte ${user.paddockCard.remaining}/${user.paddockCard.total}`:" · sans carte"}${user.paddockInvoiceCount?` · ${"🌿".repeat(Math.min(user.paddockInvoiceCount,5))} ${user.paddockInvoiceCount} à facturer`:""}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
+      copy.onclick=()=>openDetails(user);
       const actions=document.createElement("div");actions.className="user-actions";
       const role=document.createElement("select");role.setAttribute("aria-label","Rôle de "+user.firstName);
       [["client","Client"],["staff","Équipe"],["admin","Administrateur"]].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;option.selected=user.role===value;role.append(option);});
       role.onchange=()=>changeRole(user,role.value);
       const reset=document.createElement("button");reset.type="button";reset.className="secondary";reset.textContent="Réinitialiser";reset.onclick=()=>resetPassword(user);
       const toggle=document.createElement("button");toggle.type="button";toggle.className=user.status==="active"?"danger":"secondary";toggle.textContent=user.status==="active"?"Désactiver":"Réactiver";toggle.onclick=()=>changeStatus(user);
-      actions.append(role,reset,toggle);row.append(copy,actions);return row;
+      const details=document.createElement("button");details.type="button";details.className="secondary";details.textContent="Détails";details.onclick=()=>openDetails(user);
+      actions.append(details,role,reset,toggle);row.append(copy,actions);return row;
     }));
   }
+  const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
+  const formatDate=value=>value?new Date(value+"T12:00:00").toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
+  async function openDetails(user){
+    elements.modal.hidden=false;elements.modalTitle.textContent=`${user.firstName} ${user.lastName}`;elements.modalBody.innerHTML='<p class="empty">Chargement…</p>';
+    try{renderDetails(await api(`/api/admin/users/${user.id}/details`));}catch(error){elements.modalBody.innerHTML=`<p class="status error">${escapeHTML(error.message)}</p>`;}
+  }
+  function renderDetails(data){
+    const user=data.user,card=data.card,usages=data.usages||[];
+    elements.modalBody.innerHTML=`
+      <div class="detail-block"><h3>Compte</h3><p>${escapeHTML(user.email)}</p><p>Rôle : ${escapeHTML(user.role)} · Statut : ${escapeHTML(user.status)}</p></div>
+      <div class="detail-block"><h3>Carte paddock</h3>
+        ${card?`<p><strong>${card.remaining} / ${card.total}</strong> mises restantes</p>`:'<p>Aucune carte active.</p>'}
+        <div class="card-fields"><input id="detailCardTotal" type="number" min="1" max="999" value="${card?.total||10}" aria-label="Nombre total"><input id="detailCardRemaining" type="number" min="0" max="999" value="${card?.remaining??card?.total??10}" aria-label="Nombre restant"><button id="saveDetailCard">${card?"Réinitialiser":"Créer la carte"}</button></div>
+        ${card?'<button id="deleteDetailCard" class="secondary" style="margin-top:8px">Supprimer la carte</button>':''}
+      </div>
+      <div class="detail-block"><h3>Consommations et facturation</h3><div class="usage-list">
+        ${usages.map(item=>`<div class="usage-row"><span class="${item.mode==="invoice"?"leaf":""}">${item.mode==="invoice"?"🌿 À facturer":"Carte débitée"} · ${formatDate(item.date)}</span><button class="danger" data-delete-usage="${item.id}">${item.mode==="invoice"?"Facturé · supprimer":"Annuler"}</button></div>`).join("")||'<p class="empty">Aucune consommation.</p>'}
+      </div></div>`;
+    byId("saveDetailCard").onclick=()=>saveCard(user.id);
+    if(byId("deleteDetailCard"))byId("deleteDetailCard").onclick=()=>deleteCard(user.id);
+    elements.modalBody.querySelectorAll("[data-delete-usage]").forEach(button=>button.onclick=()=>deleteUsage(user.id,button.dataset.deleteUsage));
+  }
+  async function refreshDetails(userId){renderDetails(await api(`/api/admin/users/${userId}/details`));}
+  async function saveCard(userId){
+    const total=Number(byId("detailCardTotal").value),remaining=Number(byId("detailCardRemaining").value);
+    try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"PUT",body:JSON.stringify({total,remaining})});status(elements.connection,"Carte paddock enregistrée.","success");await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}
+  }
+  async function deleteCard(userId){if(!confirm("Supprimer cette carte paddock ? L’historique reste conservé."))return;try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
+  async function deleteUsage(userId,usageId){if(!confirm("Supprimer cette ligne ? Une unité sera restituée si elle provenait de la carte."))return;try{await api(`/api/admin/users/${userId}/paddock-usages/${usageId}`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
   async function load(){status(elements.connection,"Chargement…");try{const users=await api("/api/admin/users");localStorage.setItem("notifications_beta_api_url",elements.apiUrl.value.trim());localStorage.setItem("notifications_beta_admin_token",elements.token.value);render(users);status(elements.connection,`${users.length} compte(s) bêta.`,"success");}catch(error){status(elements.connection,error.message,"error");}}
   async function changeStatus(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({status:user.status==="active"?"disabled":"active"})});await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function changeRole(user,role){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({role})});status(elements.connection,"Rôle mis à jour.","success");await load();}catch(error){status(elements.connection,error.message,"error");await load();}}
   async function resetPassword(user){const value=prompt(`Nouveau mot de passe temporaire pour ${user.firstName} (12 caractères minimum)`);if(value===null)return;try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({temporaryPassword:value})});status(elements.connection,"Mot de passe temporaire remplacé et sessions fermées.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
-  elements.form.addEventListener("submit",async event=>{event.preventDefault();status(elements.createStatus,"Création…");try{await api("/api/admin/users",{method:"POST",body:JSON.stringify({firstName:elements.firstName.value,lastName:elements.lastName.value,email:elements.email.value,cardNumber:elements.cardNumber.value,role:elements.role.value,temporaryPassword:elements.password.value})});elements.form.reset();status(elements.createStatus,"Compte bêta créé.","success");await load();}catch(error){status(elements.createStatus,error.message,"error");}});
+  elements.form.addEventListener("submit",async event=>{event.preventDefault();status(elements.createStatus,"Création…");try{await api("/api/admin/users",{method:"POST",body:JSON.stringify({firstName:elements.firstName.value,lastName:elements.lastName.value,email:elements.email.value,cardNumber:"",role:elements.role.value,temporaryPassword:elements.password.value})});elements.form.reset();status(elements.createStatus,"Compte bêta créé.","success");await load();}catch(error){status(elements.createStatus,error.message,"error");}});
+  elements.modalClose.onclick=()=>{elements.modal.hidden=true;};elements.modal.onclick=event=>{if(event.target===elements.modal)elements.modal.hidden=true;};
   elements.connect.addEventListener("click",load);elements.refresh.addEventListener("click",load);if(elements.token.value)load();
 })();

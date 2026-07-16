@@ -24,7 +24,6 @@
         <label>Prénom<input id="firstName" maxlength="60" autocomplete="given-name" required></label>
         <label>Nom<input id="lastName" maxlength="80" autocomplete="family-name" required></label>
         <label>Adresse email<input id="email" type="email" maxlength="160" autocomplete="email" required></label>
-        <label>Carte paddock<input id="cardNumber" maxlength="80"></label>
         <label>Rôle<select id="role"><option value="client">Client</option><option value="staff">Équipe</option><option value="admin">Administrateur</option></select></label>
         <label>Mot de passe temporaire<input id="temporaryPassword" type="password" minlength="12" maxlength="200" autocomplete="new-password" required></label>
       </div><p class="help">12 caractères minimum. L’utilisateur devra le remplacer à sa première connexion.</p>
@@ -33,7 +32,13 @@
     <section class="users-panel"><div class="panel-heading"><h2>Comptes bêta</h2><button id="refreshBtn" class="secondary" type="button">Actualiser</button></div>
       <div id="usersList" class="users-list"><p class="empty">Connectez le backend pour charger les comptes.</p></div></section>
   </main>
-  <script src="assets/js/users.js?v=20260716-1"></script>
+  <div id="userDetailsModal" class="user-modal" hidden>
+    <div class="user-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="userDetailsTitle">
+      <div class="panel-heading"><h2 id="userDetailsTitle">Détails utilisateur</h2><button id="closeUserDetails" class="secondary" type="button">Fermer</button></div>
+      <div id="userDetailsBody"></div>
+    </div>
+  </div>
+  <script src="assets/js/users.js?v=20260716-2"></script>
   <script src="assets/js/backstage-shell.js?v=20260716-2"></script>
 </body>
 </html>
