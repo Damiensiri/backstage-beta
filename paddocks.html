@@ -1575,7 +1575,16 @@
         const comment = card.querySelector("[data-request-comment]").value.trim();
         requestButton.disabled = true;
         paddockAdminApi("/api/admin/paddocks/requests/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ status, comment }) })
-          .then(() => { showToast("Demande mise à jour dans D1 bêta."); return loadD1Paddocks(); })
+          .then((result) => {
+            if (result.statusChanged && !result.email?.sent && !result.email?.duplicate) {
+              showToast("Statut enregistré, mais e-mail non envoyé : " + (result.email?.error || "erreur inconnue"));
+            } else if (result.statusChanged) {
+              showToast("Statut enregistré et e-mail envoyé.");
+            } else {
+              showToast("Commentaire enregistré dans D1 bêta.");
+            }
+            return loadD1Paddocks();
+          })
           .catch((error) => showToast(error.message))
           .finally(() => { requestButton.disabled = false; });
       }
