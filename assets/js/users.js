@@ -14,12 +14,19 @@
   }
   function render(users){
     if(!users.length){elements.list.innerHTML='<p class="empty">Aucun compte bêta.</p>';return;}
-    elements.list.replaceChildren(...users.map(user=>{
-      const row=document.createElement("article");row.className="user-row";
+    const sorted=[...users].sort((a,b)=>(a.approvalStatus==="pending"?-1:0)-(b.approvalStatus==="pending"?-1:0));
+    elements.list.replaceChildren(...sorted.map(user=>{
+      const pending=user.approvalStatus==="pending";
+      const row=document.createElement("article");row.className="user-row"+(pending?" is-pending":"");
       const copy=document.createElement("div");const name=document.createElement("strong");name.textContent=`${user.firstName} ${user.lastName}`;
-      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=`${user.email} · ${user.role} · ${user.status}${user.paddockCard?` · carte ${user.paddockCard.remaining}/${user.paddockCard.total}`:" · sans carte"}${user.paddockInvoiceCount?` · ${"🌿".repeat(Math.min(user.paddockInvoiceCount,5))} ${user.paddockInvoiceCount} à facturer`:""}${user.orderDue?` · commandes à facturer ${Number(user.orderDue).toLocaleString("fr-FR",{maximumFractionDigits:2})} €`:""}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
-      copy.onclick=()=>openDetails(user);
+      const meta=document.createElement("div");meta.className="user-meta";meta.textContent=pending?`${user.email} · Demande d’inscription à valider`:`${user.email} · ${user.role} · ${user.status}${user.paddockCard?` · carte ${user.paddockCard.remaining}/${user.paddockCard.total}`:" · sans carte"}${user.paddockInvoiceCount?` · ${"🌿".repeat(Math.min(user.paddockInvoiceCount,5))} ${user.paddockInvoiceCount} à facturer`:""}${user.orderDue?` · commandes à facturer ${Number(user.orderDue).toLocaleString("fr-FR",{maximumFractionDigits:2})} €`:""}${user.mustChangePassword?" · mot de passe temporaire":""}`;copy.append(name,meta);
+      if(!pending)copy.onclick=()=>openDetails(user);
       const actions=document.createElement("div");actions.className="user-actions";
+      if(pending){
+        const approve=document.createElement("button");approve.type="button";approve.textContent="Accepter";approve.onclick=()=>approveUser(user);
+        const reject=document.createElement("button");reject.type="button";reject.className="danger";reject.textContent="Refuser";reject.onclick=()=>rejectUser(user);
+        actions.append(approve,reject);row.append(copy,actions);return row;
+      }
       const role=document.createElement("select");role.setAttribute("aria-label","Rôle de "+user.firstName);
       [["client","Client"],["staff","Équipe"],["admin","Administrateur"]].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;option.selected=user.role===value;role.append(option);});
       role.onchange=()=>changeRole(user,role.value);
@@ -63,6 +70,8 @@
   async function deleteUsage(userId,usageId){if(!confirm("Supprimer cette ligne ? Une unité sera restituée si elle provenait de la carte."))return;try{await api(`/api/admin/users/${userId}/paddock-usages/${usageId}`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
   async function load(){status(elements.connection,"Chargement…");try{const users=await api("/api/admin/users");render(users);status(elements.connection,`${users.length} compte(s) bêta.`,"success");}catch(error){status(elements.connection,error.message,"error");}}
   async function changeStatus(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({status:user.status==="active"?"disabled":"active"})});await load();}catch(error){status(elements.connection,error.message,"error");}}
+  async function approveUser(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({approvalStatus:"approved",status:"active"})});status(elements.connection,`Accès de ${user.firstName} validé.`,"success");await load();}catch(error){status(elements.connection,error.message,"error");}}
+  async function rejectUser(user){if(!confirm(`Refuser et supprimer la demande de ${user.firstName} ${user.lastName} ?`))return;try{await api(`/api/admin/users/${user.id}`,{method:"DELETE"});status(elements.connection,"Demande refusée et supprimée.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function changeRole(user,role){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({role})});status(elements.connection,"Rôle mis à jour.","success");await load();}catch(error){status(elements.connection,error.message,"error");await load();}}
   async function resetPassword(user){const value=prompt(`Nouveau mot de passe temporaire pour ${user.firstName} (12 caractères minimum)`);if(value===null)return;try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({temporaryPassword:value})});status(elements.connection,"Mot de passe temporaire remplacé et sessions fermées.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
   elements.form.addEventListener("submit",async event=>{event.preventDefault();status(elements.createStatus,"Création…");try{await api("/api/admin/users",{method:"POST",body:JSON.stringify({firstName:elements.firstName.value,lastName:elements.lastName.value,email:elements.email.value,cardNumber:"",role:elements.role.value,temporaryPassword:elements.password.value})});elements.form.reset();status(elements.createStatus,"Compte bêta créé.","success");await load();}catch(error){status(elements.createStatus,error.message,"error");}});
