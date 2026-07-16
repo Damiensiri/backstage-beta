@@ -11,9 +11,10 @@ const pushSettings=fs.readFileSync("assets/js/firebase-push-settings.js","utf8")
 const users=fs.readFileSync("assets/js/users.js","utf8");
 const usersPage=fs.readFileSync("users.html","utf8");
 
-test("la bêta Firebase est verrouillée en lecture seule",()=>{
-  assert.match(paddocks,/const FIREBASE_READ_ONLY = true;/);
-  assert.match(paddocks,/Bêta sécurisée[^<]+lecture seule/);
+test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
+  assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.match(paddocks,/Bêta Cloudflare\/D1/);
+  assert.doesNotMatch(paddocks,/firebase-app-compat|firebase-firestore-compat|firebaseConfig|\.collection\(/);
 });
 
 test("les comptes utilisent uniquement le Worker Cloudflare bêta",()=>{
@@ -23,11 +24,11 @@ test("les comptes utilisent uniquement le Worker Cloudflare bêta",()=>{
   assert.match(shell,/\["Utilisateurs","users\.html"/);
 });
 
-test("chaque action Firebase sensible possède un verrou",()=>{
+test("chaque action paddock sensible appelle l’API D1 bêta",()=>{
   for(const name of ["createBlockage","deleteBlockage","cancelReservation","saveRestriction","deleteRestriction","saveHours"]){
     const start=paddocks.indexOf(`function ${name}`);
     assert.notEqual(start,-1,`${name} doit exister`);
-    assert.match(paddocks.slice(start,start+420),/FIREBASE_READ_ONLY/,`${name} doit être verrouillée`);
+    assert.match(paddocks.slice(start,start+1800),/paddockAdminApi/,`${name} doit utiliser D1`);
   }
 });
 

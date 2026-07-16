@@ -734,7 +734,7 @@
     </header>
 
     <main class="layout">
-      <div class="prototype-warning" role="status">Bêta sécurisée : les données Firebase réelles sont affichées en lecture seule. Aucune réservation, restriction ou horaire ne peut être modifié ici.</div>
+      <div class="prototype-warning" role="status">Bêta Cloudflare/D1 : toutes les actions de cette page restent isolées de la production.</div>
       <nav class="desktop-nav" aria-label="Navigation principale">
         <button class="nav-btn is-active" data-view-target="planning"><span class="nav-icon">🗓️</span>Planning</button>
         <button class="nav-btn" data-view-target="reservations"><span class="nav-icon">📒</span>Reservations</button>
@@ -811,7 +811,7 @@
         <div class="section-head">
           <div>
             <h2 class="section-title">Blocages</h2>
-            <p class="section-note">Lecture seule: le formulaire montre le futur comportement sans ecrire dans Firebase.</p>
+            <p class="section-note">Le blocage sera enregistré uniquement dans D1 bêta.</p>
           </div>
         </div>
 
@@ -918,13 +918,21 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <script>
-    // La bêta lit les données réelles pour valider le rendu, mais aucune écriture
-    // Firebase n'est autorisée avant le basculement explicite en production.
-    const FIREBASE_READ_ONLY = true;
+    const PADDOCK_API = "https://ecurie-notifications-beta.damiensiri-pro.workers.dev";
+    const PADDOCK_ADMIN_TOKEN_KEY = "notifications_beta_admin_token";
+
+    async function paddockAdminApi(path, options = {}) {
+      const token = localStorage.getItem(PADDOCK_ADMIN_TOKEN_KEY) || "";
+      if (!token) throw new Error("Jeton d’administration bêta manquant dans Paramètres.");
+      const response = await fetch(PADDOCK_API + path, {
+        ...options,
+        headers: { authorization: "Bearer " + token, ...(options.body ? { "content-type": "application/json" } : {}) }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `Erreur ${response.status}`);
+      return data;
+    }
 
     const PASS = "0359140";
     if (!localStorage.getItem("backstage_auth")) {
@@ -936,14 +944,6 @@
       localStorage.setItem("backstage_auth", "true");
     }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBn6Hgu-xvsWqpwJ-i4lZyI0QjKMBvOeXA",
-      authDomain: "ecurie-paddock.firebaseapp.com",
-      projectId: "ecurie-paddock",
-      storageBucket: "ecurie-paddock.firebasestorage.app",
-      messagingSenderId: "501153278739",
-      appId: "1:501153278739:web:824b4344c381f2a94548e6"
-    };
 
     const paddocks = [
       { id: "maison", label: "Maison" },
@@ -988,7 +988,6 @@
     let restrictions = {};
     let selectedDate = offsetDate(0);
     let blockFilter = "future";
-    let db = null;
 
     function offsetDate(daysFromToday) {
       const date = new Date();
@@ -1359,30 +1358,7 @@
       fillRestrictionForm();
     }
 
-    function normalizeReservation(doc) {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || "",
-        email: data.email || "",
-        paddock: data.paddock || "",
-        date: data.date || "",
-        time: data.time || "",
-        duration: Number(data.duration || 60),
-        type: data.type || data.reservationType || ""
-      };
-    }
-
     async function createBlockage() {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucun blocage créé.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       const date = document.getElementById("blockDate").value;
       const reason = document.getElementById("blockReason").value.trim();
       const start = document.getElementById("blockStart").value;
@@ -1410,27 +1386,14 @@
       const cleanReason = reason || "Blocage";
       const blockName = cleanReason.toLowerCase().startsWith("blocage") ? cleanReason : `Blocage ${cleanReason}`;
 
-      await Promise.all(selectedPaddocks.map((paddock) => db.collection("reservations").add({
-        name: blockName,
-        paddock,
-        date,
-        time: start,
-        duration
-      })));
-
-      showToast("Blocage cree dans Firebase.");
+      try {
+        await paddockAdminApi("/api/admin/paddocks/blockages", { method: "POST", body: JSON.stringify({ name: blockName, paddocks: selectedPaddocks, date, time: start, duration }) });
+        await loadD1Paddocks();
+        showToast("Blocage créé dans D1 bêta.");
+      } catch (error) { showToast(error.message); }
     }
 
     async function deleteBlockage(id) {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucun blocage supprimé.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       const item = blocages.find((blockage) => blockage.id === id);
       if (!item) {
         showToast("Blocage introuvable.");
@@ -1440,20 +1403,10 @@
       const label = `${item.name} - ${paddockLabel(item.paddock)} - ${formatDate(item.date)} - ${formatTimeRange(item)}`;
       if (!confirm(`Supprimer ce blocage ?\n\n${label}`)) return;
 
-      await db.collection("reservations").doc(id).delete();
-      showToast("Blocage supprime.");
+      try { await paddockAdminApi("/api/admin/paddocks/reservations/" + encodeURIComponent(id), { method: "DELETE" }); await loadD1Paddocks(); showToast("Blocage supprimé."); } catch (error) { showToast(error.message); }
     }
 
     async function cancelReservation(id) {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucune réservation annulée.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       const item = reservations.find((reservation) => reservation.id === id);
       if (!item) {
         showToast("Reservation introuvable.");
@@ -1468,20 +1421,10 @@
       const label = `${item.name} - ${paddockLabel(item.paddock)} - ${formatDate(item.date)} - ${item.time}`;
       if (!confirm(`Annuler cette reservation ?\n\n${label}`)) return;
 
-      await db.collection("reservations").doc(id).delete();
-      showToast("Reservation annulee.");
+      try { await paddockAdminApi("/api/admin/paddocks/reservations/" + encodeURIComponent(id), { method: "DELETE" }); await loadD1Paddocks(); showToast("Réservation annulée."); } catch (error) { showToast(error.message); }
     }
 
     async function saveRestriction() {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucune exception modifiée.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       const date = document.getElementById("restrictionDate").value;
       const target = document.getElementById("restrictionTarget").value;
 
@@ -1492,8 +1435,7 @@
 
       if (target === "none") {
         if (!confirm(`Supprimer les exceptions 1h30 du ${formatDate(date)} ?`)) return;
-        await db.collection("restrictions").doc(date).delete();
-        showToast("Exception supprimee.");
+        try { await paddockAdminApi("/api/admin/paddocks/restrictions/" + date, { method: "DELETE" }); await loadD1Paddocks(); showToast("Exception supprimée."); } catch (error) { showToast(error.message); }
         return;
       }
 
@@ -1502,36 +1444,16 @@
         blockBeudot90: target === "beudot" || target === "both"
       };
 
-      await db.collection("restrictions").doc(date).set(payload);
-      showToast("Exception enregistree.");
+      try { await paddockAdminApi("/api/admin/paddocks/restrictions", { method: "PUT", body: JSON.stringify({ date, ...payload }) }); await loadD1Paddocks(); showToast("Exception enregistrée."); } catch (error) { showToast(error.message); }
     }
 
     async function deleteRestriction(date) {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucune exception supprimée.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       if (!confirm(`Supprimer cette exception 1h30 ?\n\n${formatDate(date)}`)) return;
 
-      await db.collection("restrictions").doc(date).delete();
-      showToast("Exception supprimee.");
+      try { await paddockAdminApi("/api/admin/paddocks/restrictions/" + date, { method: "DELETE" }); await loadD1Paddocks(); showToast("Exception supprimée."); } catch (error) { showToast(error.message); }
     }
 
     async function saveHours() {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : aucun horaire modifié.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
       const selectedPaddock = document.getElementById("hoursPaddock").value;
       const targetPaddocks = selectedPaddock === "all" ? ["maison", "grande", "beudot"] : [selectedPaddock];
       const nextConfig = {};
@@ -1551,59 +1473,21 @@
       const label = selectedPaddock === "all" ? "les 3 paddocks" : paddockLabel(selectedPaddock);
       if (!confirm(`Sauvegarder les horaires pour ${label} ?`)) return;
 
-      await Promise.all(targetPaddocks.map((paddock) => db.collection("horaires").doc(paddock).set(nextConfig)));
-      showToast("Horaires sauvegardes.");
+      try { await paddockAdminApi("/api/admin/paddocks/hours", { method: "PUT", body: JSON.stringify({ paddocks: targetPaddocks, schedule: nextConfig }) }); await loadD1Paddocks(); showToast("Horaires sauvegardés dans D1 bêta."); } catch (error) { showToast(error.message); }
     }
 
-    function subscribeFirebaseReadOnly() {
-      if (!window.firebase || !firebase.firestore) {
-        showToast("Firebase indisponible: affichage vide.");
-        return;
-      }
-
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-
-      db = firebase.firestore();
-
-      db.collection("reservations").onSnapshot((snapshot) => {
-        const realReservations = [];
-        const realBlocages = [];
-
-        snapshot.forEach((doc) => {
-          const item = normalizeReservation(doc);
-          if (String(item.name).toLowerCase().startsWith("blocage")) {
-            realBlocages.push(item);
-          } else {
-            realReservations.push(item);
-          }
-        });
-
-        reservations = realReservations;
-        blocages = realBlocages;
+    async function loadD1Paddocks() {
+      try {
+        const data = await paddockAdminApi("/api/admin/paddocks");
+        const all = data.reservations || [];
+        reservations = all.filter((item) => !String(item.name).toLowerCase().startsWith("blocage"));
+        blocages = all.filter((item) => String(item.name).toLowerCase().startsWith("blocage"));
+        if (Object.keys(data.horaires || {}).length) horaires = data.horaires;
+        restrictions = data.restrictions || {};
         refreshViews();
-      });
-
-      db.collection("horaires").onSnapshot((snapshot) => {
-        const nextHoraires = {};
-        snapshot.forEach((doc) => {
-          nextHoraires[doc.id] = doc.data();
-        });
-        if (Object.keys(nextHoraires).length) {
-          horaires = nextHoraires;
-          refreshViews();
-        }
-      });
-
-      db.collection("restrictions").onSnapshot((snapshot) => {
-        const nextRestrictions = {};
-        snapshot.forEach((doc) => {
-          nextRestrictions[doc.id] = doc.data();
-        });
-        restrictions = nextRestrictions;
-        refreshViews();
-      });
+      } catch (error) {
+        showToast(error.message);
+      }
     }
 
     document.querySelectorAll("button").forEach((button) => {
@@ -1627,7 +1511,7 @@
       }
 
       if (event.target.closest("[data-demo-action]")) {
-        showToast("Lecture seule: aucune donnee Firebase n'est modifiee.");
+        showToast("Action disponible dans D1 bêta.");
       }
 
       const deleteButton = event.target.closest("[data-delete-blockage]");
@@ -1665,7 +1549,8 @@
 
     setSelectedDate(offsetDate(0));
     refreshViews();
-    subscribeFirebaseReadOnly();
+    loadD1Paddocks();
+    setInterval(loadD1Paddocks, 5000);
   </script>
   <script src="assets/js/backstage-shell.js?v=20260716-1"></script>
 </body>
