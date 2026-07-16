@@ -42,7 +42,7 @@
       <div class="detail-block"><h3>Compte</h3><p>${escapeHTML(user.email)}</p><p>Rôle : ${escapeHTML(user.role)} · Statut : ${escapeHTML(user.status)}</p></div>
       <div class="detail-block"><h3>Carte paddock</h3>
         ${card?`<p><strong>${card.remaining} / ${card.total}</strong> mises restantes</p>`:'<p>Aucune carte active.</p>'}
-        <div class="card-fields"><input id="detailCardTotal" type="number" min="1" max="999" value="${card?.total||10}" aria-label="Nombre total"><input id="detailCardRemaining" type="number" min="0" max="999" value="${card?.remaining??card?.total??10}" aria-label="Nombre restant"><button id="saveDetailCard">${card?"Réinitialiser":"Créer la carte"}</button></div>
+        <div class="card-fields"><input id="detailCardRemaining" type="number" min="0" max="999" value="${card?.remaining??card?.total??10}" aria-label="Solde restant" title="Solde restant"><input id="detailCardTotal" type="number" min="1" max="999" value="${card?.total||10}" aria-label="Solde de base" title="Solde de base"><button id="saveDetailCard">${card?"Réinitialiser":"Créer la carte"}</button></div>
         ${card?'<button id="deleteDetailCard" class="secondary" style="margin-top:8px">Supprimer la carte</button>':''}
       </div>
       <div class="detail-block"><h3>Consommations et facturation</h3><div class="usage-list">
