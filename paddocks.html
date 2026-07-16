@@ -805,6 +805,16 @@
         </div>
 
         <div class="list-grid" id="reservationList"></div>
+
+        <section class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Demandes de mise au paddock</h3>
+              <p class="section-note">Statuts et commentaires enregistrés dans D1 bêta.</p>
+            </div>
+          </div>
+          <div class="panel-body"><div class="list-grid" id="paddockRequestList"></div></div>
+        </section>
       </section>
 
       <section class="view" id="view-blocages">
@@ -985,6 +995,7 @@
 
     let reservations = [];
     let blocages = [];
+    let paddockRequests = [];
     let restrictions = {};
     let selectedDate = offsetDate(0);
     let blockFilter = "future";
@@ -1046,6 +1057,10 @@
       showToast.timeout = window.setTimeout(() => {
         toast.style.display = "none";
       }, 2600);
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
     }
 
     function switchView(view) {
@@ -1274,6 +1289,32 @@
       `).join("") || `<div class="prototype-warning">Aucune reservation dans ce filtre.</div>`;
     }
 
+    function renderPaddockRequests() {
+      const labels = { pending: "En attente", accepted: "Accepté", refused: "Refusé", completed: "Réalisé", cancelled: "Annulé" };
+      const today = offsetDate(0);
+      const items = [...paddockRequests].sort((a, b) => b.date.localeCompare(a.date));
+      document.getElementById("paddockRequestList").innerHTML = items.map((item) => `
+        <article class="item-card" data-paddock-request="${item.id}">
+          <div class="item-top">
+            <h3 class="item-title">${escapeHTML(item.name)}</h3>
+            <span class="badge ${item.status === "pending" ? "amber" : "green"}">${escapeHTML(labels[item.status] || item.status)}</span>
+          </div>
+          <div class="item-meta"><span>${formatDate(item.date)}</span><span>${escapeHTML(item.email)}</span><span>${item.date < today ? "Historique" : "À venir"}</span></div>
+          <div class="form-grid" style="margin-top:12px">
+            <label class="field-label">Statut
+              <select class="select" data-request-status>
+                ${Object.entries(labels).map(([value, label]) => `<option value="${value}" ${item.status === value ? "selected" : ""}>${label}</option>`).join("")}
+              </select>
+            </label>
+            <label class="field-label">Commentaire
+              <input class="field" data-request-comment maxlength="500" value="${escapeHTML(item.comment)}" placeholder="Information pour le client">
+            </label>
+          </div>
+          <div class="item-actions"><button class="primary-action" data-save-paddock-request="${item.id}">Enregistrer</button></div>
+        </article>
+      `).join("") || `<div class="prototype-warning">Aucune demande de mise au paddock.</div>`;
+    }
+
     function renderBlocks() {
       const today = offsetDate(0);
       let filtered = blocages;
@@ -1352,6 +1393,7 @@
     function refreshViews() {
       renderPlanning();
       renderReservations();
+      renderPaddockRequests();
       renderBlocks();
       renderHours();
       renderRestrictions();
@@ -1482,6 +1524,7 @@
         const all = data.reservations || [];
         reservations = all.filter((item) => !String(item.name).toLowerCase().startsWith("blocage"));
         blocages = all.filter((item) => String(item.name).toLowerCase().startsWith("blocage"));
+        paddockRequests = data.requests || [];
         if (Object.keys(data.horaires || {}).length) horaires = data.horaires;
         restrictions = data.restrictions || {};
         refreshViews();
@@ -1524,6 +1567,19 @@
         cancelReservation(cancelButton.dataset.cancelReservation);
       }
 
+      const requestButton = event.target.closest("[data-save-paddock-request]");
+      if (requestButton) {
+        const card = requestButton.closest("[data-paddock-request]");
+        const id = requestButton.dataset.savePaddockRequest;
+        const status = card.querySelector("[data-request-status]").value;
+        const comment = card.querySelector("[data-request-comment]").value.trim();
+        requestButton.disabled = true;
+        paddockAdminApi("/api/admin/paddocks/requests/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ status, comment }) })
+          .then(() => { showToast("Demande mise à jour dans D1 bêta."); return loadD1Paddocks(); })
+          .catch((error) => showToast(error.message))
+          .finally(() => { requestButton.disabled = false; });
+      }
+
       const deleteRestrictionButton = event.target.closest("[data-delete-restriction]");
       if (deleteRestrictionButton) {
         deleteRestriction(deleteRestrictionButton.dataset.deleteRestriction);
@@ -1551,7 +1607,7 @@
     refreshViews();
     loadD1Paddocks();
     window.addEventListener("pwa-data-changed", (event) => {
-      if (event.detail?.type === "paddocks" || event.detail?.type === "all") loadD1Paddocks();
+      if (event.detail?.type === "paddocks" || event.detail?.type === "paddock-requests" || event.detail?.type === "all") loadD1Paddocks();
     });
   </script>
   <script src="assets/js/status-realtime.js?v=20260716-3"></script>
