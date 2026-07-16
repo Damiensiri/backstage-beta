@@ -33,7 +33,8 @@
       const reset=document.createElement("button");reset.type="button";reset.className="secondary";reset.textContent="Réinitialiser";reset.onclick=()=>resetPassword(user);
       const toggle=document.createElement("button");toggle.type="button";toggle.className=user.status==="active"?"danger":"secondary";toggle.textContent=user.status==="active"?"Désactiver":"Réactiver";toggle.onclick=()=>changeStatus(user);
       const details=document.createElement("button");details.type="button";details.className="secondary";details.textContent="Détails";details.onclick=()=>openDetails(user);
-      actions.append(details,role,reset,toggle);row.append(copy,actions);return row;
+      const remove=document.createElement("button");remove.type="button";remove.className="danger";remove.textContent="Supprimer";remove.onclick=()=>deleteUser(user);
+      actions.append(details,role,reset,toggle,remove);row.append(copy,actions);return row;
     }));
   }
   const escapeHTML=value=>String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
@@ -45,7 +46,7 @@
   function renderDetails(data){
     const user=data.user,card=data.card,usages=data.usages||[],orders=data.orders||[];
     elements.modalBody.innerHTML=`
-      <div class="detail-block"><h3>Compte</h3><p>${escapeHTML(user.email)}</p><p>Rôle : ${escapeHTML(user.role)} · Statut : ${escapeHTML(user.status)}</p></div>
+      <div class="detail-block"><h3>Compte</h3><p>${escapeHTML(user.email)}</p><p>Rôle : ${escapeHTML(user.role)} · Statut : ${escapeHTML(user.status)}</p><button id="deleteDetailUser" class="danger">Supprimer définitivement ce compte</button></div>
       <div class="detail-block"><h3>Carte paddock</h3>
         ${card?`<p><strong>${card.remaining} / ${card.total}</strong> mises restantes</p>`:'<p>Aucune carte active.</p>'}
         <div class="card-fields"><input id="detailCardRemaining" type="number" min="0" max="999" value="${card?.remaining??card?.total??10}" aria-label="Solde restant" title="Solde restant"><input id="detailCardTotal" type="number" min="1" max="999" value="${card?.total||10}" aria-label="Solde de base" title="Solde de base"><button id="saveDetailCard">${card?"Réinitialiser":"Créer la carte"}</button></div>
@@ -58,6 +59,7 @@
         ${orders.filter(order=>!order.billed&&!['refused','cancelled'].includes(order.status)).map(order=>`<div class="usage-row"><span>#${escapeHTML(order.publicId)} · ${order.items.map(item=>`${escapeHTML(item.name)} × ${item.quantity}`).join(', ')}</span><strong>${Number(order.total).toLocaleString("fr-FR",{maximumFractionDigits:2})} €</strong></div>`).join('')||'<p class="empty">Aucune commande à facturer.</p>'}
       </div></div>`;
     byId("saveDetailCard").onclick=()=>saveCard(user.id);
+    byId("deleteDetailUser").onclick=()=>deleteUser(user);
     if(byId("deleteDetailCard"))byId("deleteDetailCard").onclick=()=>deleteCard(user.id);
     elements.modalBody.querySelectorAll("[data-delete-usage]").forEach(button=>button.onclick=()=>deleteUsage(user.id,button.dataset.deleteUsage));
   }
@@ -72,6 +74,7 @@
   async function changeStatus(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({status:user.status==="active"?"disabled":"active"})});await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function approveUser(user){try{const result=await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({approvalStatus:"approved",status:"active"})});const sent=result.email?.sent||result.email?.duplicate;status(elements.connection,sent?`Accès de ${user.firstName} validé · email envoyé.`:`Accès validé, mais l’email n’a pas pu être envoyé${result.email?.error?` : ${result.email.error}`:"."}`,sent?"success":"error");await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function rejectUser(user){if(!confirm(`Refuser et supprimer la demande de ${user.firstName} ${user.lastName} ?`))return;try{await api(`/api/admin/users/${user.id}`,{method:"DELETE"});status(elements.connection,"Demande refusée et supprimée.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
+  async function deleteUser(user){const confirmation=prompt(`Suppression définitive de ${user.firstName} ${user.lastName}, avec ses réservations, commandes, carte et photo.\n\nPour confirmer, saisissez son adresse email :`);if(confirmation===null)return;if(confirmation.trim().toLowerCase()!==user.email.toLowerCase()){status(elements.connection,"Suppression annulée : adresse email différente.","error");return;}try{await api(`/api/admin/users/${user.id}`,{method:"DELETE"});elements.modal.hidden=true;status(elements.connection,"Compte et données associées définitivement supprimés.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function changeRole(user,role){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({role})});status(elements.connection,"Rôle mis à jour.","success");await load();}catch(error){status(elements.connection,error.message,"error");await load();}}
   async function resetPassword(user){const value=prompt(`Nouveau mot de passe temporaire pour ${user.firstName} (12 caractères minimum)`);if(value===null)return;try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({temporaryPassword:value})});status(elements.connection,"Mot de passe temporaire remplacé et sessions fermées.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
   elements.form.addEventListener("submit",async event=>{event.preventDefault();status(elements.createStatus,"Création…");try{await api("/api/admin/users",{method:"POST",body:JSON.stringify({firstName:elements.firstName.value,lastName:elements.lastName.value,email:elements.email.value,cardNumber:"",role:elements.role.value,temporaryPassword:elements.password.value})});elements.form.reset();status(elements.createStatus,"Compte bêta créé.","success");await load();}catch(error){status(elements.createStatus,error.message,"error");}});
