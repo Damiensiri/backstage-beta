@@ -7,6 +7,7 @@ const administration=fs.readFileSync("administration.html","utf8");
 const adminScript=fs.readFileSync("assets/js/administration.js","utf8");
 const realtime=fs.readFileSync("assets/js/status-realtime.js","utf8");
 const shell=fs.readFileSync("assets/js/backstage-shell.js","utf8");
+const pushSettings=fs.readFileSync("assets/js/firebase-push-settings.js","utf8");
 
 test("la bêta Firebase est verrouillée en lecture seule",()=>{
   assert.match(paddocks,/const FIREBASE_READ_ONLY = true;/);
@@ -14,7 +15,7 @@ test("la bêta Firebase est verrouillée en lecture seule",()=>{
 });
 
 test("chaque action Firebase sensible possède un verrou",()=>{
-  for(const name of ["enablePushNotifications","createBlockage","deleteBlockage","cancelReservation","saveRestriction","deleteRestriction","saveHours"]){
+  for(const name of ["createBlockage","deleteBlockage","cancelReservation","saveRestriction","deleteRestriction","saveHours"]){
     const start=paddocks.indexOf(`function ${name}`);
     assert.notEqual(start,-1,`${name} doit exister`);
     assert.match(paddocks.slice(start,start+420),/FIREBASE_READ_ONLY/,`${name} doit être verrouillée`);
@@ -40,4 +41,11 @@ test("l’éditeur des espaces est une fenêtre modale",()=>{
   assert.match(administration,/class="space-editor-overlay"/);
   assert.match(administration,/role="dialog" aria-modal="true"/);
   assert.match(adminScript,/document\.body\.classList\.add\("space-editor-open"\)/);
+});
+
+test("le réglage des notifications Firebase est déplacé et verrouillé en bêta",()=>{
+  assert.doesNotMatch(paddocks,/id="enablePushBtn"/);
+  assert.match(administration,/id="enablePushBtn"/);
+  assert.match(pushSettings,/const FIREBASE_PUSH_READ_ONLY=true;/);
+  assert.match(pushSettings,/if\(FIREBASE_PUSH_READ_ONLY\)/);
 });

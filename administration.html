@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
-<link rel="stylesheet" href="assets/css/administration.css?v=20260716-1">
+<link rel="stylesheet" href="assets/css/administration.css?v=20260716-2">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -163,11 +163,21 @@
       <button id="forgetTokenBtn" class="secondary forget-button" type="button">Oublier le jeton</button>
       <p id="connectionStatus" class="status" role="status"></p>
     </div>
+    <div class="panel connection-panel" aria-labelledby="pushSettingsTitle">
+      <h2 id="pushSettingsTitle">Notifications du Backstage</h2>
+      <p class="section-help">Active les notifications Firebase sur cet appareil. En bêta, l’abonnement reste volontairement inchangé.</p>
+      <button id="enablePushBtn" class="push-settings-button" type="button">Activer les notifications</button>
+      <p id="pushSettingsStatus" class="status" role="status"></p>
+    </div>
   </section>
 </main>
-<script src="assets/js/notification-format.js?v=20260716-1"></script>
-<script src="assets/js/administration.js?v=20260716-1"></script>
-<script src="assets/js/status-realtime.js?v=20260716-1"></script>
-<script src="assets/js/backstage-shell.js?v=20260716-1"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<script src="assets/js/notification-format.js?v=20260716-2"></script>
+<script src="assets/js/administration.js?v=20260716-2"></script>
+<script src="assets/js/firebase-push-settings.js?v=20260716-2"></script>
+<script src="assets/js/status-realtime.js?v=20260716-2"></script>
+<script src="assets/js/backstage-shell.js?v=20260716-2"></script>
 </body>
 </html>

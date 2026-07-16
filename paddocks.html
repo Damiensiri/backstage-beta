@@ -91,28 +91,6 @@
       text-overflow: ellipsis;
     }
 
-    .notify-action {
-      flex: 0 0 auto;
-      min-height: 44px;
-      padding: 0 12px;
-      border-color: rgba(104, 225, 143, .45);
-      background: rgba(104, 225, 143, .14);
-      color: #d7ffe1;
-      font-size: 13px;
-      font-weight: 850;
-      white-space: nowrap;
-    }
-
-    .notify-action.is-on {
-      background: rgba(104, 225, 143, .22);
-    }
-
-    .notify-action.is-error {
-      border-color: rgba(255, 109, 109, .5);
-      background: rgba(255, 109, 109, .13);
-      color: #ffd6d6;
-    }
-
     .layout {
       width: min(1180px, 100%);
       margin: 0 auto;
@@ -729,11 +707,6 @@
 
     @media (max-width: 520px) {
       .topbar { align-items: flex-start; }
-      .notify-action {
-        min-height: 40px;
-        padding: 0 10px;
-        font-size: 12px;
-      }
     }
 
     @media (min-width: 980px) {
@@ -758,7 +731,6 @@
         <h1 class="brand-title">Backstage</h1>
         <div class="brand-subtitle">Gestion paddocks</div>
       </div>
-      <button class="notify-action" id="enablePushBtn">Activer notifications</button>
     </header>
 
     <main class="layout">
@@ -948,13 +920,11 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
   <script>
     // La bêta lit les données réelles pour valider le rendu, mais aucune écriture
     // Firebase n'est autorisée avant le basculement explicite en production.
     const FIREBASE_READ_ONLY = true;
-    const FCM_VAPID_KEY = "BKf6TU4UsZgu-dAYLre0KWyK6qOk55ZeCzYNG6hMuWWBSZVLIC02sBvmZQXhauGS1sI790nQ6MS6Dx3nC56FQj8";
 
     const PASS = "0359140";
     if (!localStorage.getItem("backstage_auth")) {
@@ -1019,7 +989,6 @@
     let selectedDate = offsetDate(0);
     let blockFilter = "future";
     let db = null;
-    let messaging = null;
 
     function offsetDate(daysFromToday) {
       const date = new Date();
@@ -1078,82 +1047,6 @@
       showToast.timeout = window.setTimeout(() => {
         toast.style.display = "none";
       }, 2600);
-    }
-
-    function updatePushButton(state, label) {
-      const button = document.getElementById("enablePushBtn");
-      if (!button) return;
-      button.textContent = label;
-      button.classList.toggle("is-on", state === "on");
-      button.classList.toggle("is-error", state === "error");
-    }
-
-    function subscriptionIdFromToken(token) {
-      return btoa(token).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    }
-
-    async function enablePushNotifications() {
-      if (FIREBASE_READ_ONLY) {
-        showToast("Bêta en lecture seule : abonnement Firebase inchangé.");
-        return;
-      }
-      if (!db) {
-        showToast("Firebase n'est pas encore pret.");
-        return;
-      }
-
-      if (!FCM_VAPID_KEY) {
-        updatePushButton("error", "Cle FCM manquante");
-        showToast("Ajoute d'abord la cle Web Push FCM dans le fichier.");
-        return;
-      }
-
-      if (!("Notification" in window) || !("serviceWorker" in navigator) || !firebase.messaging) {
-        updatePushButton("error", "Non compatible");
-        showToast("Ce navigateur ne gere pas les notifications push ici.");
-        return;
-      }
-
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        updatePushButton("error", "Notifications bloquees");
-        showToast("Notifications refusees sur cet appareil.");
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      messaging = firebase.messaging();
-
-      const token = await messaging.getToken({
-        vapidKey: FCM_VAPID_KEY,
-        serviceWorkerRegistration: registration
-      });
-
-      if (!token) {
-        updatePushButton("error", "Abonnement impossible");
-        showToast("Impossible d'obtenir l'abonnement notifications.");
-        return;
-      }
-
-      await db.collection("notificationSubscriptions").doc(subscriptionIdFromToken(token)).set({
-        token,
-        enabled: true,
-        source: "backstage",
-        userAgent: navigator.userAgent,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      messaging.onMessage((payload) => {
-        const title = payload.data?.title || payload.notification?.title || "Backstage";
-        const body = payload.data?.body || payload.notification?.body || "Nouvelle notification";
-        showToast(`${title} - ${body}`);
-        if (Notification.permission === "granted") {
-          new Notification(title, { body, data: payload.data || {} });
-        }
-      });
-
-      updatePushButton("on", "Notifications actives");
-      showToast("Notifications activees sur cet appareil.");
     }
 
     function switchView(view) {
@@ -1674,10 +1567,6 @@
 
       db = firebase.firestore();
 
-      if ("Notification" in window && Notification.permission === "granted") {
-        updatePushButton("on", "Notifications actives");
-      }
-
       db.collection("reservations").onSnapshot((snapshot) => {
         const realReservations = [];
         const realBlocages = [];
@@ -1725,8 +1614,6 @@
       button.addEventListener("click", handleViewNavigation);
       button.addEventListener("touchend", handleViewNavigation, { passive: false });
     });
-
-    document.getElementById("enablePushBtn")?.addEventListener("click", enablePushNotifications);
 
     document.addEventListener("click", (event) => {
       const dayButton = event.target.closest("[data-day-offset]");
