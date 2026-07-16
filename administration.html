@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Administration</title>
+<title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="stylesheet" href="assets/css/administration.css">
 <link rel="stylesheet" href="assets/css/backstage-shell.css">
@@ -13,37 +13,12 @@
   <header class="admin-header">
     <div class="admin-heading">
       <div class="admin-title-row">
-        <h1>Administration</h1>
+        <h1 id="adminPageTitle">Espaces</h1>
         <span class="environment">BÊTA</span>
       </div>
-      <p>Notifications, espaces et horaires de la PWA.</p>
-    </div>
-    <div class="header-actions">
-      <button id="settingsBtn" class="icon-button" type="button" aria-label="Ouvrir les paramètres" aria-expanded="false">⚙︎</button>
-      <a href="index.html">Accueil</a>
+      <p id="adminPageSubtitle">Statuts et horaires propres aux espaces de la PWA.</p>
     </div>
   </header>
-
-  <nav class="admin-tabs" aria-label="Sections d’administration">
-    <button type="button" data-section-button="spaces" class="active">Espaces</button>
-    <button type="button" data-section-button="notifications">Notifications</button>
-    <button type="button" data-section-button="general">Écuries</button>
-    <button type="button" data-section-button="exceptions">Exceptions</button>
-    <button type="button" data-section-button="home-alert">Alerte accueil</button>
-  </nav>
-
-  <section id="settingsPanel" class="panel connection-panel" aria-labelledby="connectionTitle" hidden>
-    <h2 id="connectionTitle">Connexion au backend bêta</h2>
-    <label>Adresse de l’API
-      <input id="apiUrl" type="url" inputmode="url" placeholder="https://…workers.dev">
-    </label>
-    <label>Jeton d’administration
-      <input id="adminToken" type="password" autocomplete="current-password" placeholder="Jeton mémorisé uniquement sur cet appareil">
-    </label>
-    <button id="connectBtn" type="button">Se connecter</button>
-    <button id="forgetTokenBtn" class="secondary forget-button" type="button">Oublier le jeton</button>
-    <p id="connectionStatus" class="status" role="status"></p>
-  </section>
 
   <div data-admin-section="notifications" hidden>
   <section class="panel" aria-labelledby="formTitle">
@@ -109,7 +84,8 @@
       <div id="spacePills" class="space-pills"></div>
       <p id="spaceListStatus" class="status" role="status"></p>
     </div>
-    <div id="spaceEditor" hidden>
+    <div id="spaceEditor" class="space-editor-overlay" hidden>
+    <div class="space-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="spaceEditorTitle">
     <div class="panel">
       <div class="panel-heading">
         <h2 id="spaceEditorTitle">Modifier l’espace</h2>
@@ -133,6 +109,7 @@
       <p id="spaceSchedulesStatus" class="status" role="status"></p>
     </div>
     </div>
+    </div>
   </section>
 
   <section class="admin-section" data-admin-section="general" hidden>
@@ -143,9 +120,6 @@
       <button id="saveGeneralSchedulesBtn" type="button">Enregistrer les horaires des écuries</button>
       <p id="generalSchedulesStatus" class="status" role="status"></p>
     </div>
-  </section>
-
-  <section class="admin-section" data-admin-section="exceptions" hidden>
     <div class="panel">
       <h2>Exception de date</h2>
       <label>Date
@@ -172,6 +146,22 @@
       <label class="check"><input id="homeAlertUrgent" type="checkbox"> Alerte urgente</label>
       <button id="saveHomeAlertBtn" type="button">Enregistrer l’alerte d’accueil</button>
       <p id="homeAlertStatus" class="status" role="status"></p>
+    </div>
+  </section>
+
+  <section id="settingsPanel" class="admin-section" data-admin-section="settings" aria-labelledby="connectionTitle" hidden>
+    <div class="panel connection-panel">
+      <h2 id="connectionTitle">Connexion au backend bêta</h2>
+      <p class="section-help">Ces réglages restent mémorisés uniquement sur cet appareil.</p>
+      <label>Adresse de l’API
+        <input id="apiUrl" type="url" inputmode="url" placeholder="https://…workers.dev">
+      </label>
+      <label>Jeton d’administration
+        <input id="adminToken" type="password" autocomplete="current-password" placeholder="Jeton mémorisé uniquement sur cet appareil">
+      </label>
+      <button id="connectBtn" type="button">Enregistrer et se connecter</button>
+      <button id="forgetTokenBtn" class="secondary forget-button" type="button">Oublier le jeton</button>
+      <p id="connectionStatus" class="status" role="status"></p>
     </div>
   </section>
 </main>

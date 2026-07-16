@@ -1,7 +1,7 @@
 (function(){
   const elements={
-    settingsButton:document.getElementById("settingsBtn"),
-    settingsPanel:document.getElementById("settingsPanel"),
+    pageTitle:document.getElementById("adminPageTitle"),
+    pageSubtitle:document.getElementById("adminPageSubtitle"),
     apiUrl:document.getElementById("apiUrl"),
     token:document.getElementById("adminToken"),
     connect:document.getElementById("connectBtn"),
@@ -59,12 +59,6 @@
   elements.apiUrl.value=storedUrl;
   elements.token.value=storedToken;
 
-  function toggleSettings(force){
-    const open=typeof force==="boolean"?force:elements.settingsPanel.hidden;
-    elements.settingsPanel.hidden=!open;
-    elements.settingsButton.setAttribute("aria-expanded",String(open));
-  }
-
   function settings(){
     return{
       base:elements.apiUrl.value.trim().replace(/\/$/,""),
@@ -103,7 +97,6 @@
       localStorage.setItem("notifications_beta_admin_token",config.token);
       render();
       setStatus(elements.connectionStatus,`${alerts.length} alerte(s) chargée(s).`,"success");
-      toggleSettings(false);
     }catch(error){
       setStatus(elements.connectionStatus,error.message,"error");
     }
@@ -123,10 +116,9 @@
       render();
       renderOperations();
       setStatus(elements.connectionStatus,"Administration connectée.","success");
-      toggleSettings(false);
     }catch(error){
       setStatus(elements.connectionStatus,error.message,"error");
-      toggleSettings(true);
+      showSection("settings");
     }
   }
 
@@ -247,7 +239,8 @@
     const space=operations.spaces.find(item=>item.slug===slug);
     elements.spaceEditorTitle.textContent=`Modifier ${space?.label||"l’espace"}`;
     elements.spaceEditor.hidden=false;
-    elements.spaceEditor.scrollIntoView({behavior:"smooth",block:"start"});
+    document.body.classList.add("space-editor-open");
+    elements.closeSpaceEditor.focus();
   }
 
   function renderSelectedSpace(){
@@ -487,7 +480,6 @@
   });
 
   elements.connect.addEventListener("click",loadAll);
-  elements.settingsButton.addEventListener("click",()=>toggleSettings());
   elements.forgetToken.addEventListener("click",()=>{
     localStorage.removeItem("notifications_beta_admin_token");
     elements.token.value="";
@@ -498,27 +490,39 @@
   elements.cancel.addEventListener("click",resetForm);
 
   function showSection(name){
-    const selected=document.querySelector(`[data-section-button="${name}"]`)||document.querySelector('[data-section-button="spaces"]');
-    document.querySelectorAll("[data-section-button]").forEach(item=>item.classList.toggle("active",item===selected));
+    const sections={
+      spaces:{title:"Espaces",subtitle:"Statuts et horaires propres aux espaces de la PWA."},
+      notifications:{title:"Notifications",subtitle:"Publication des informations et envoi des notifications push."},
+      general:{title:"Horaires",subtitle:"Horaires des écuries et exceptions de date."},
+      "home-alert":{title:"Alertes",subtitle:"Bandeau d’information affiché sur l’accueil de la PWA."},
+      settings:{title:"Paramètres",subtitle:"Connexion sécurisée au backend de la bêta."}
+    };
+    const selectedName=sections[name]?name:"spaces";
     document.querySelectorAll("[data-admin-section]").forEach(section=>{
-      section.hidden=section.dataset.adminSection!==selected.dataset.sectionButton;
+      section.hidden=section.dataset.adminSection!==selectedName;
     });
+    if(selectedName!=="spaces")closeSpaceEditor();
+    elements.pageTitle.textContent=sections[selectedName].title;
+    elements.pageSubtitle.textContent=sections[selectedName].subtitle;
+    document.title=`${sections[selectedName].title} — Backstage bêta`;
     const url=new URL(window.location.href);
-    url.searchParams.set("section",selected.dataset.sectionButton);
+    url.searchParams.set("section",selectedName);
     history.replaceState(null,"",url);
   }
-
-  document.querySelectorAll("[data-section-button]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      showSection(button.dataset.sectionButton);
-    });
-  });
 
   showSection(new URLSearchParams(window.location.search).get("section")||"spaces");
 
   elements.spaceSelect.addEventListener("change",renderSelectedSpace);
-  elements.closeSpaceEditor.addEventListener("click",()=>{
+  function closeSpaceEditor(){
     elements.spaceEditor.hidden=true;
+    document.body.classList.remove("space-editor-open");
+  }
+  elements.closeSpaceEditor.addEventListener("click",closeSpaceEditor);
+  elements.spaceEditor.addEventListener("click",event=>{
+    if(event.target===elements.spaceEditor)closeSpaceEditor();
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape"&&!elements.spaceEditor.hidden)closeSpaceEditor();
   });
   elements.saveSpace.addEventListener("click",async()=>{
     const slug=elements.spaceSelect.value;
@@ -642,6 +646,6 @@
   if(storedToken){
     loadAll();
   }else{
-    toggleSettings(true);
+    showSection("settings");
   }
 })();

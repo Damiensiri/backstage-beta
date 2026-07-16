@@ -12,20 +12,12 @@ button{cursor:pointer}
 [hidden]{display:none!important}
 
 .admin-shell{width:min(760px,100%);margin:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom))}
-.admin-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.admin-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;padding-right:62px}
 .admin-heading{min-width:0;flex:1}
 .admin-title-row{display:flex;align-items:center;gap:12px}
 .admin-header h1{font-size:34px;margin:0 0 4px;white-space:nowrap}
 .admin-header p{margin:0;color:#c9dfed;line-height:1.45}
-.admin-header a{color:#fff;text-decoration:none;border:1px solid #ffffff40;border-radius:999px;padding:10px 14px;background:#ffffff12}
-.header-actions{display:flex;align-items:center;gap:8px}
-.icon-button{width:42px;height:42px;padding:0;border:1px solid #ffffff40;border-radius:50%;background:#ffffff12;color:#fff;font-size:22px}
 .environment{display:inline-block;background:#ffb23f;color:#1d2730;font-size:11px;font-weight:800;letter-spacing:.08em;border-radius:999px;padding:6px 10px}
-
-.admin-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
-.admin-tabs::-webkit-scrollbar{display:none}
-.admin-tabs button{flex:0 0 auto;width:auto;padding:10px 14px;border:1px solid #ffffff30;background:#ffffff12;color:#e5f2f9;font-size:12px}
-.admin-tabs button.active{border-color:#ffb23f;background:#ffb23f;color:#172430}
 
 .panel{margin:16px 0;padding:18px;border:1px solid #ffffff30;border-radius:24px;background:#102d45d9;box-shadow:0 18px 48px #00101f4d;backdrop-filter:blur(18px)}
 .panel h2{font-size:19px;margin:0 0 16px}
@@ -111,7 +103,11 @@ button.secondary{width:auto;padding:9px 12px;border:1px solid #ffffff30;backgrou
 .quick-toggle{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:5px;padding:7px 8px;border-radius:12px;background:#ffffff08}
 .quick-toggle span{font-size:10px;font-weight:800;color:#c9dfed}
 .quick-toggle button{width:auto;padding:6px 7px}
-#spaceEditor{scroll-margin-top:14px}
+body.space-editor-open{overflow:hidden}
+.space-editor-overlay{position:fixed;z-index:1100;inset:0;display:grid;align-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:#020914c7;backdrop-filter:blur(7px)}
+.space-editor-sheet{width:min(700px,100%);max-height:min(88dvh,850px);margin:auto;overflow-y:auto;overscroll-behavior:contain;border:1px solid #ffffff38;border-radius:28px;background:#0d2b43;box-shadow:0 28px 80px #000b}
+.space-editor-sheet .panel{margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.space-editor-sheet .panel+.panel{border-top:1px solid #ffffff24}
 .two-columns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .schedule-grid{display:grid;gap:8px;margin-bottom:14px}
 .schedule-row{display:grid;grid-template-columns:minmax(84px,1fr) 105px 105px;align-items:center;gap:8px;padding:9px;border-radius:14px;background:#071b2b80}
@@ -124,11 +120,12 @@ button.danger{border:1px solid #ffaaa766;background:#d05a5a2e;color:#ffc0bd}
 button.compact{width:auto;padding:8px 10px;font-size:11px}
 
 @media(max-width:520px){
-  .admin-header{display:block}
+  .admin-header{display:block;padding-right:58px}
   .admin-title-row{justify-content:space-between;gap:8px}
   .admin-header h1{font-size:28px}
   .environment{flex:0 0 auto;padding:4px 7px;font-size:8px;letter-spacing:.04em;white-space:nowrap}
-  .header-actions{margin-top:14px}
+  .space-editor-overlay{align-items:end;padding:calc(10px + env(safe-area-inset-top)) 0 0}
+  .space-editor-sheet{width:100%;max-height:92dvh;margin:0;border-radius:26px 26px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom)}
   .quick-options{grid-template-columns:1fr}
   .schedule-row{grid-template-columns:82px 1fr 1fr}
 }
