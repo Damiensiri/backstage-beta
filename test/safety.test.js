@@ -8,10 +8,19 @@ const adminScript=fs.readFileSync("assets/js/administration.js","utf8");
 const realtime=fs.readFileSync("assets/js/status-realtime.js","utf8");
 const shell=fs.readFileSync("assets/js/backstage-shell.js","utf8");
 const pushSettings=fs.readFileSync("assets/js/firebase-push-settings.js","utf8");
+const users=fs.readFileSync("assets/js/users.js","utf8");
+const usersPage=fs.readFileSync("users.html","utf8");
 
 test("la bêta Firebase est verrouillée en lecture seule",()=>{
   assert.match(paddocks,/const FIREBASE_READ_ONLY = true;/);
   assert.match(paddocks,/Bêta sécurisée[^<]+lecture seule/);
+});
+
+test("les comptes utilisent uniquement le Worker Cloudflare bêta",()=>{
+  assert.match(users,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.doesNotMatch(users,/prod|firebase/i);
+  assert.match(usersPage,/BÊTA · D1/);
+  assert.match(shell,/\["Utilisateurs","users\.html"/);
 });
 
 test("chaque action Firebase sensible possède un verrou",()=>{
