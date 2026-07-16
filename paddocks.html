@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Backstage Écurie</title>
+  <link rel="stylesheet" href="assets/css/backstage-shell.css">
   <style>
     :root {
       color-scheme: dark;
@@ -761,6 +762,7 @@
     </header>
 
     <main class="layout">
+      <div class="prototype-warning" role="status">Bêta sécurisée : les données Firebase réelles sont affichées en lecture seule. Aucune réservation, restriction ou horaire ne peut être modifié ici.</div>
       <nav class="desktop-nav" aria-label="Navigation principale">
         <button class="nav-btn is-active" data-view-target="planning"><span class="nav-icon">🗓️</span>Planning</button>
         <button class="nav-btn" data-view-target="reservations"><span class="nav-icon">📒</span>Reservations</button>
@@ -949,7 +951,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
   <script>
-    const FIREBASE_READ_ONLY = false;
+    // La bêta lit les données réelles pour valider le rendu, mais aucune écriture
+    // Firebase n'est autorisée avant le basculement explicite en production.
+    const FIREBASE_READ_ONLY = true;
     const FCM_VAPID_KEY = "BKf6TU4UsZgu-dAYLre0KWyK6qOk55ZeCzYNG6hMuWWBSZVLIC02sBvmZQXhauGS1sI790nQ6MS6Dx3nC56FQj8";
 
     const PASS = "0359140";
@@ -1089,6 +1093,10 @@
     }
 
     async function enablePushNotifications() {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : abonnement Firebase inchangé.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1473,6 +1481,10 @@
     }
 
     async function createBlockage() {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucun blocage créé.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1517,6 +1529,10 @@
     }
 
     async function deleteBlockage(id) {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucun blocage supprimé.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1536,6 +1552,10 @@
     }
 
     async function cancelReservation(id) {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucune réservation annulée.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1560,6 +1580,10 @@
     }
 
     async function saveRestriction() {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucune exception modifiée.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1590,6 +1614,10 @@
     }
 
     async function deleteRestriction(date) {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucune exception supprimée.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1602,6 +1630,10 @@
     }
 
     async function saveHours() {
+      if (FIREBASE_READ_ONLY) {
+        showToast("Bêta en lecture seule : aucun horaire modifié.");
+        return;
+      }
       if (!db) {
         showToast("Firebase n'est pas encore pret.");
         return;
@@ -1748,5 +1780,6 @@
     refreshViews();
     subscribeFirebaseReadOnly();
   </script>
+  <script src="assets/js/backstage-shell.js"></script>
 </body>
 </html>
