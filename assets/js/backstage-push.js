@@ -15,7 +15,7 @@
   window.OneSignalDeferred=window.OneSignalDeferred||[];
   window.OneSignalDeferred.push(async OneSignal=>{
     try{
-      await OneSignal.init({appId:APP_ID,notifyButton:{enable:false},serviceWorkerPath:"backstage-beta/OneSignalSDKWorker.js",serviceWorkerParam:{scope:"/backstage-beta/"}});
+      await OneSignal.init({appId:APP_ID,notifyButton:{enable:false},welcomeNotification:{disable:true},serviceWorkerPath:"backstage-beta/OneSignalSDKWorker.js",serviceWorkerParam:{scope:"/backstage-beta/"}});
       OneSignal.User.PushSubscription.addEventListener("change",()=>{if(OneSignal.User.PushSubscription.id)registerSubscription(OneSignal).catch(()=>{});});
       if(Notification.permission==="granted"&&OneSignal.User.PushSubscription.id)await registerSubscription(OneSignal);
       button.addEventListener("click",async()=>{try{await OneSignal.Notifications.requestPermission();if(!OneSignal.Notifications.permission)throw new Error("Notifications refusées ou bloquées");await registerSubscription(OneSignal);}catch(error){setState(error?.message||"Activation impossible.","error");}});
