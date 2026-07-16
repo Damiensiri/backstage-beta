@@ -1,16 +1,15 @@
 (function(){
   const byId=id=>document.getElementById(id);
-  const elements={apiUrl:byId("apiUrl"),token:byId("adminToken"),connect:byId("connectBtn"),connection:byId("connectionStatus"),
+  const elements={connection:byId("connectionStatus"),
     form:byId("userForm"),firstName:byId("firstName"),lastName:byId("lastName"),email:byId("email"),
     role:byId("role"),password:byId("temporaryPassword"),createStatus:byId("createStatus"),refresh:byId("refreshBtn"),list:byId("usersList"),
     modal:byId("userDetailsModal"),modalTitle:byId("userDetailsTitle"),modalBody:byId("userDetailsBody"),modalClose:byId("closeUserDetails")};
-  elements.apiUrl.value=localStorage.getItem("notifications_beta_api_url")||"https://ecurie-notifications-beta.damiensiri-pro.workers.dev";
-  elements.token.value=localStorage.getItem("notifications_beta_admin_token")||"";
+  const apiBase=(localStorage.getItem("notifications_beta_api_url")||"https://ecurie-notifications-beta.damiensiri-pro.workers.dev").replace(/\/$/,"");
+  const adminToken=localStorage.getItem("notifications_beta_admin_token")||"";
   function status(element,message,type=""){element.textContent=message;element.className="status"+(type?" "+type:"");}
   async function api(path,options={}){
-    const base=elements.apiUrl.value.trim().replace(/\/$/,"");const token=elements.token.value;
-    if(!base||!token)throw new Error("Adresse API et jeton requis");
-    const response=await fetch(base+path,{...options,headers:{authorization:"Bearer "+token,...(options.body?{"content-type":"application/json"}:{})}});
+    if(!apiBase||!adminToken)throw new Error("Configurez la connexion dans Paramètres");
+    const response=await fetch(apiBase+path,{...options,headers:{authorization:"Bearer "+adminToken,...(options.body?{"content-type":"application/json"}:{})}});
     const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||`Erreur ${response.status}`);return data;
   }
   function render(users){
@@ -62,11 +61,11 @@
   }
   async function deleteCard(userId){if(!confirm("Supprimer cette carte paddock et ses consommations liées ?"))return;try{await api(`/api/admin/users/${userId}/paddock-card`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
   async function deleteUsage(userId,usageId){if(!confirm("Supprimer cette ligne ? Une unité sera restituée si elle provenait de la carte."))return;try{await api(`/api/admin/users/${userId}/paddock-usages/${usageId}`,{method:"DELETE"});await refreshDetails(userId);}catch(error){status(elements.connection,error.message,"error");}}
-  async function load(){status(elements.connection,"Chargement…");try{const users=await api("/api/admin/users");localStorage.setItem("notifications_beta_api_url",elements.apiUrl.value.trim());localStorage.setItem("notifications_beta_admin_token",elements.token.value);render(users);status(elements.connection,`${users.length} compte(s) bêta.`,"success");}catch(error){status(elements.connection,error.message,"error");}}
+  async function load(){status(elements.connection,"Chargement…");try{const users=await api("/api/admin/users");render(users);status(elements.connection,`${users.length} compte(s) bêta.`,"success");}catch(error){status(elements.connection,error.message,"error");}}
   async function changeStatus(user){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({status:user.status==="active"?"disabled":"active"})});await load();}catch(error){status(elements.connection,error.message,"error");}}
   async function changeRole(user,role){try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({role})});status(elements.connection,"Rôle mis à jour.","success");await load();}catch(error){status(elements.connection,error.message,"error");await load();}}
   async function resetPassword(user){const value=prompt(`Nouveau mot de passe temporaire pour ${user.firstName} (12 caractères minimum)`);if(value===null)return;try{await api(`/api/admin/users/${user.id}`,{method:"PATCH",body:JSON.stringify({temporaryPassword:value})});status(elements.connection,"Mot de passe temporaire remplacé et sessions fermées.","success");await load();}catch(error){status(elements.connection,error.message,"error");}}
   elements.form.addEventListener("submit",async event=>{event.preventDefault();status(elements.createStatus,"Création…");try{await api("/api/admin/users",{method:"POST",body:JSON.stringify({firstName:elements.firstName.value,lastName:elements.lastName.value,email:elements.email.value,cardNumber:"",role:elements.role.value,temporaryPassword:elements.password.value})});elements.form.reset();status(elements.createStatus,"Compte bêta créé.","success");await load();}catch(error){status(elements.createStatus,error.message,"error");}});
   elements.modalClose.onclick=()=>{elements.modal.hidden=true;};elements.modal.onclick=event=>{if(event.target===elements.modal)elements.modal.hidden=true;};
-  elements.connect.addEventListener("click",load);elements.refresh.addEventListener("click",load);if(elements.token.value)load();
+  elements.refresh.addEventListener("click",load);load();
 })();

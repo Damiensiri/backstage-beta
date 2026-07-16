@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#090b0f">
   <title>Utilisateurs — Backstage bêta</title>
   <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-2">
@@ -12,12 +12,7 @@
   <main class="users-shell">
     <header class="users-header"><span class="beta-pill">BÊTA · D1</span><h1>Utilisateurs</h1>
       <p>Les comptes créés ici sont isolés dans Cloudflare/D1 bêta.</p></header>
-    <section class="users-panel" aria-labelledby="connectionTitle">
-      <h2 id="connectionTitle">Connexion au backend</h2>
-      <div class="field-grid"><label>Adresse de l’API<input id="apiUrl" type="url"></label>
-        <label>Jeton d’administration<input id="adminToken" type="password" autocomplete="current-password"></label></div>
-      <button id="connectBtn" type="button">Se connecter</button><p id="connectionStatus" class="status" role="status"></p>
-    </section>
+    <p id="connectionStatus" class="status" role="status"></p>
     <section class="users-panel" aria-labelledby="createTitle">
       <h2 id="createTitle">Créer un compte</h2>
       <form id="userForm"><div class="field-grid">
