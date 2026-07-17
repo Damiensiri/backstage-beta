@@ -12,6 +12,9 @@ const users=fs.readFileSync("assets/js/users.js","utf8");
 const usersPage=fs.readFileSync("users.html","utf8");
 const liberte=fs.readFileSync("liberte.html","utf8");
 const liberteScript=fs.readFileSync("assets/js/liberte.js","utf8");
+const home=fs.readFileSync("index.html","utf8");
+const billing=fs.readFileSync("billing.html","utf8");
+const billingScript=fs.readFileSync("assets/js/billing.js","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
@@ -80,4 +83,19 @@ test("l’onglet Liberté centralise les demandes sans supprimer leur rappel Pad
   assert.doesNotMatch(liberte+liberteScript,/firebase/i);
   assert.match(paddocks,/id="paddockRequestList"/);
   assert.match(paddocks,/href="liberte\.html"/);
+});
+
+test("l’accueil donne accès à Liberté, à la facturation et aux thèmes bêta",()=>{
+  assert.match(home,/href="liberte\.html"/);
+  assert.match(home,/href="billing\.html"/);
+  assert.match(home,/https:\/\/damiensiri\.github\.io\/push2-beta\/admin\.html/);
+  assert.match(shell,/\["À facturer","billing\.html"/);
+  assert.match(shell,/\["Thèmes","https:\/\/damiensiri\.github\.io\/push2-beta\/admin\.html"/);
+});
+
+test("la facturation consolidée reste sur Cloudflare D1 bêta",()=>{
+  assert.match(billing,/BÊTA · D1/);
+  assert.match(billingScript,/api\/admin\/billing/);
+  assert.match(billingScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.doesNotMatch(billing+billingScript,/firebase/i);
 });
