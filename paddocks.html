@@ -820,8 +820,8 @@
                   <option value="">Choisir</option><option value="maison">Maison</option><option value="grande">Grande voie</option><option value="beudot">Beudot</option>
                 </select>
               </label>
-              <label class="field-label">Heure
-                <input class="field" id="adminReservationTime" type="time" step="1800" required>
+              <label class="field-label">Créneau disponible
+                <select class="select" id="adminReservationTime" required><option value="">Choisir d’abord le jour et le paddock</option></select>
               </label>
               <label class="field-label">Durée
                 <select class="select" id="adminReservationDuration" required>
@@ -1340,6 +1340,53 @@
       const ninety = duration.querySelector('option[value="90"]');
       ninety.disabled = paddock === "maison" || !paddock;
       if (ninety.disabled && duration.value === "90") duration.value = "60";
+      updateAdminReservationSlots();
+    }
+
+    function updateAdminReservationSlots() {
+      const select = document.getElementById("adminReservationTime");
+      const date = document.getElementById("adminReservationDate").value;
+      const paddock = document.getElementById("adminReservationPaddock").value;
+      const duration = Number(document.getElementById("adminReservationDuration").value);
+      const previous = select.value;
+      if (!date || !paddock || !duration) {
+        select.innerHTML = `<option value="">Choisir d’abord le jour et le paddock</option>`;
+        return;
+      }
+      const restriction = restrictions[date];
+      if (duration === 90 && ((paddock === "grande" && restriction?.blockGrande90) || (paddock === "beudot" && restriction?.blockBeudot90))) {
+        select.innerHTML = `<option value="">1 h 30 indisponible ce jour</option>`;
+        return;
+      }
+      const config = horaires[paddock]?.[dayName(date)];
+      if (!config || config.closed) {
+        select.innerHTML = `<option value="">Paddock fermé ce jour</option>`;
+        return;
+      }
+      const open = minutes(config.open);
+      const close = minutes(config.close);
+      const today = offsetDate(0);
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const busy = [...reservations, ...blocages].filter((item) => item.date === date && item.paddock === paddock);
+      const slots = [];
+      for (let start = open; start + duration <= close; start += 60) {
+        if (date === today && start <= nowMinutes) continue;
+        const end = start + duration;
+        const conflict = busy.some((item) => {
+          const busyStart = minutes(item.time);
+          const busyEnd = busyStart + Number(item.duration || 60);
+          return start < busyEnd && end > busyStart;
+        });
+        if (!conflict) slots.push(timeFromMinutes(start));
+      }
+      select.innerHTML = slots.length
+        ? `<option value="">Choisir un créneau</option>` + slots.map((time) => {
+          const end = timeFromMinutes(minutes(time) + duration);
+          return `<option value="${time}">${time} → ${end}</option>`;
+        }).join("")
+        : `<option value="">Aucun créneau disponible</option>`;
+      if (slots.includes(previous)) select.value = previous;
     }
 
     async function createAdminReservation(event) {
@@ -1617,6 +1664,7 @@
         paddockUsers = Array.isArray(users) ? users : [];
         renderAdminReservationUsers();
         refreshViews();
+        updateAdminReservationSlots();
       } catch (error) {
         showToast(error.message);
       }
@@ -1707,6 +1755,8 @@
     });
     document.getElementById("adminReservationForm").addEventListener("submit", createAdminReservation);
     document.getElementById("adminReservationPaddock").addEventListener("change", updateAdminReservationDurations);
+    document.getElementById("adminReservationDate").addEventListener("change", updateAdminReservationSlots);
+    document.getElementById("adminReservationDuration").addEventListener("change", updateAdminReservationSlots);
     document.getElementById("hoursPaddock").addEventListener("change", renderHours);
     document.getElementById("restrictionDate").addEventListener("change", fillRestrictionForm);
     document.getElementById("createBlockBtn").addEventListener("click", createBlockage);
