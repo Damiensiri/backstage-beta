@@ -3,6 +3,7 @@
     ["Accueil","index.html","⌂"],
     ["Espaces","administration.html?section=spaces","🏇"],
     ["Paddocks","paddocks.html","🗓️"],
+    ["Liberté","liberte.html","🌿"],
     ["Notifications","administration.html?section=notifications","🔔"],
     ["Horaires","administration.html?section=general","🕘"],
     ["Alertes","administration.html?section=home-alert","⚠️"],

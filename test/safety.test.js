@@ -10,6 +10,8 @@ const shell=fs.readFileSync("assets/js/backstage-shell.js","utf8");
 const pushSettings=fs.readFileSync("assets/js/backstage-push.js","utf8");
 const users=fs.readFileSync("assets/js/users.js","utf8");
 const usersPage=fs.readFileSync("users.html","utf8");
+const liberte=fs.readFileSync("liberte.html","utf8");
+const liberteScript=fs.readFileSync("assets/js/liberte.js","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
@@ -66,4 +68,16 @@ test("les notifications Backstage utilisent OneSignal et l’API Cloudflare bêt
   assert.doesNotMatch(administration,/firebase/i);
   assert.match(pushSettings,/api\/admin\/push\/subscription/);
   assert.match(pushSettings,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+});
+
+test("l’onglet Liberté centralise les demandes sans supprimer leur rappel Paddocks",()=>{
+  assert.match(shell,/\["Liberté","liberte\.html"/);
+  assert.match(liberte,/id="liberteRequestForm"/);
+  assert.match(liberte,/id="exceptionForm"/);
+  assert.match(liberte,/id="liberteRequestList"/);
+  assert.match(liberteScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.match(liberteScript,/api\/admin\/liberte/);
+  assert.doesNotMatch(liberte+liberteScript,/firebase/i);
+  assert.match(paddocks,/id="paddockRequestList"/);
+  assert.match(paddocks,/href="liberte\.html"/);
 });
