@@ -32,6 +32,12 @@ test("chaque action paddock sensible appelle l’API D1 bêta",()=>{
   }
 });
 
+test("le formulaire de réservation client conserve un vrai bouton de soumission",()=>{
+  assert.match(paddocks,/id="adminReservationSubmit" type="submit"/);
+  assert.match(paddocks,/if \(!button\.hasAttribute\("type"\)\) button\.type = "button"/);
+  assert.match(paddocks,/adminReservationForm"\)\.addEventListener\("submit", createAdminReservation\)/);
+});
+
 test("l’administration utilise uniquement Cloudflare bêta",()=>{
   assert.match(adminScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
   assert.doesNotMatch(adminScript,/ecurie-notifications-prod/);

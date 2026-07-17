@@ -1671,7 +1671,7 @@
     }
 
     document.querySelectorAll("button").forEach((button) => {
-      button.type = "button";
+      if (!button.hasAttribute("type")) button.type = "button";
     });
 
     document.querySelectorAll("[data-view-target]").forEach((button) => {
