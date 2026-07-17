@@ -800,6 +800,39 @@
           </select>
         </div>
 
+        <section class="panel" style="margin-bottom:16px">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Réserver pour un client</h3>
+              <p class="section-note">La réservation sera reliée à son compte. Les occupations et exceptions restent strictement bloquantes.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="adminReservationForm" class="form-grid">
+              <label class="field-label">Client
+                <select class="select" id="adminReservationUser" required><option value="">Chargement des clients…</option></select>
+              </label>
+              <label class="field-label">Jour
+                <input class="field" id="adminReservationDate" type="date" required>
+              </label>
+              <label class="field-label">Paddock
+                <select class="select" id="adminReservationPaddock" required>
+                  <option value="">Choisir</option><option value="maison">Maison</option><option value="grande">Grande voie</option><option value="beudot">Beudot</option>
+                </select>
+              </label>
+              <label class="field-label">Heure
+                <input class="field" id="adminReservationTime" type="time" step="1800" required>
+              </label>
+              <label class="field-label">Durée
+                <select class="select" id="adminReservationDuration" required>
+                  <option value="60">1 heure</option><option value="90">1 heure 30</option>
+                </select>
+              </label>
+              <button class="primary-action" id="adminReservationSubmit" type="submit">Créer la réservation</button>
+            </form>
+          </div>
+        </section>
+
         <div class="date-picker">
           <input class="field" id="reservationSearch" type="search" placeholder="Rechercher un nom" aria-label="Rechercher une reservation par nom">
           <button id="clearReservationSearch">Effacer</button>
@@ -997,6 +1030,7 @@
     let reservations = [];
     let blocages = [];
     let paddockRequests = [];
+    let paddockUsers = [];
     let restrictions = {};
     let selectedDate = offsetDate(0);
     let blockFilter = "future";
@@ -1290,6 +1324,49 @@
       `).join("") || `<div class="prototype-warning">Aucune reservation dans ce filtre.</div>`;
     }
 
+    function renderAdminReservationUsers() {
+      const select = document.getElementById("adminReservationUser");
+      const selected = select.value;
+      const users = paddockUsers.filter((user) => user.status === "active" && user.approvalStatus === "approved")
+        .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, "fr"));
+      select.innerHTML = `<option value="">Choisir un client</option>` + users.map((user) =>
+        `<option value="${user.id}">${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)} — ${escapeHTML(user.email)}</option>`).join("");
+      if (users.some((user) => String(user.id) === selected)) select.value = selected;
+    }
+
+    function updateAdminReservationDurations() {
+      const paddock = document.getElementById("adminReservationPaddock").value;
+      const duration = document.getElementById("adminReservationDuration");
+      const ninety = duration.querySelector('option[value="90"]');
+      ninety.disabled = paddock === "maison" || !paddock;
+      if (ninety.disabled && duration.value === "90") duration.value = "60";
+    }
+
+    async function createAdminReservation(event) {
+      event.preventDefault();
+      const button = document.getElementById("adminReservationSubmit");
+      const payload = {
+        userId: Number(document.getElementById("adminReservationUser").value),
+        date: document.getElementById("adminReservationDate").value,
+        paddock: document.getElementById("adminReservationPaddock").value,
+        time: document.getElementById("adminReservationTime").value,
+        duration: Number(document.getElementById("adminReservationDuration").value)
+      };
+      if (!payload.userId || !payload.date || !payload.paddock || !payload.time) {
+        showToast("Complète tous les champs de la réservation.");
+        return;
+      }
+      button.disabled = true;
+      try {
+        const result = await paddockAdminApi("/api/admin/paddocks/reservations", { method: "POST", body: JSON.stringify(payload) });
+        await loadD1Paddocks();
+        document.getElementById("adminReservationTime").value = "";
+        if (result.email?.sent || result.email?.duplicate) showToast(`Réservation créée pour ${result.reservation.name} et confirmation envoyée.`);
+        else showToast(`Réservation créée, mais e-mail non envoyé : ${result.email?.error || "erreur inconnue"}`);
+      } catch (error) { showToast(error.message); }
+      finally { button.disabled = false; }
+    }
+
     function renderPaddockRequests() {
       const labels = { pending: "En attente", accepted: "Accepté", refused: "Refusé", completed: "Réalisé", cancelled: "Annulé" };
       const today = offsetDate(0);
@@ -1527,13 +1604,18 @@
 
     async function loadD1Paddocks() {
       try {
-        const data = await paddockAdminApi("/api/admin/paddocks");
+        const [data, users] = await Promise.all([
+          paddockAdminApi("/api/admin/paddocks"),
+          paddockAdminApi("/api/admin/users")
+        ]);
         const all = data.reservations || [];
         reservations = all.filter((item) => !String(item.name).toLowerCase().startsWith("blocage"));
         blocages = all.filter((item) => String(item.name).toLowerCase().startsWith("blocage"));
         paddockRequests = data.requests || [];
         if (Object.keys(data.horaires || {}).length) horaires = data.horaires;
         restrictions = data.restrictions || {};
+        paddockUsers = Array.isArray(users) ? users : [];
+        renderAdminReservationUsers();
         refreshViews();
       } catch (error) {
         showToast(error.message);
@@ -1623,6 +1705,8 @@
       document.getElementById("reservationSearch").value = "";
       renderReservations();
     });
+    document.getElementById("adminReservationForm").addEventListener("submit", createAdminReservation);
+    document.getElementById("adminReservationPaddock").addEventListener("change", updateAdminReservationDurations);
     document.getElementById("hoursPaddock").addEventListener("change", renderHours);
     document.getElementById("restrictionDate").addEventListener("change", fillRestrictionForm);
     document.getElementById("createBlockBtn").addEventListener("click", createBlockage);
@@ -1630,6 +1714,9 @@
     document.getElementById("saveRestrictionBtn").addEventListener("click", saveRestriction);
 
     setSelectedDate(offsetDate(0));
+    document.getElementById("adminReservationDate").value = offsetDate(0);
+    document.getElementById("adminReservationDate").min = offsetDate(0);
+    updateAdminReservationDurations();
     refreshViews();
     loadD1Paddocks();
     window.addEventListener("pwa-data-changed", (event) => {
