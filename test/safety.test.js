@@ -15,6 +15,7 @@ const liberteScript=fs.readFileSync("assets/js/liberte.js","utf8");
 const home=fs.readFileSync("index.html","utf8");
 const billing=fs.readFileSync("billing.html","utf8");
 const billingScript=fs.readFileSync("assets/js/billing.js","utf8");
+const homeSummary=fs.readFileSync("assets/js/home-summary.js","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
@@ -98,4 +99,16 @@ test("la facturation consolidée reste sur Cloudflare D1 bêta",()=>{
   assert.match(billingScript,/api\/admin\/billing/);
   assert.match(billingScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
   assert.doesNotMatch(billing+billingScript,/firebase/i);
+});
+
+test("l’accueil récapitule uniquement les actions D1 à traiter",()=>{
+  assert.match(home,/id="summaryBilling"/);
+  assert.match(home,/id="summaryOrders"/);
+  assert.match(home,/id="summaryRequests"/);
+  assert.match(home,/id="summaryUsers"/);
+  assert.match(homeSummary,/api\/admin\/billing/);
+  assert.match(homeSummary,/api\/admin\/orders/);
+  assert.match(homeSummary,/api\/admin\/liberte/);
+  assert.match(homeSummary,/api\/admin\/users/);
+  assert.doesNotMatch(homeSummary,/planning|reservations/i);
 });
