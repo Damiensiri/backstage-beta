@@ -2,15 +2,15 @@
   const links=[
     ["Accueil","index.html","⌂"],
     ["Espaces","administration.html?section=spaces","🏇"],
+    ["Planning","planning.html","🐴"],
     ["Paddocks","paddocks.html","🗓️"],
     ["Liberté","liberte.html","🌿"],
-    ["Planning","planning.html","🐴"],
-    ["À facturer","billing.html","💶"],
     ["Notifications","administration.html?section=notifications","🔔"],
-    ["Horaires","administration.html?section=general","🕘"],
+    ["À facturer","billing.html","💶"],
     ["Alertes","administration.html?section=home-alert","⚠️"],
-    ["Utilisateurs","users.html","👤"],
     ["Commandes","orders.html","🧾"],
+    ["Horaires","administration.html?section=general","🕘"],
+    ["Utilisateurs","users.html","👤"],
     ["Thèmes","https://damiensiri.github.io/push2-beta/admin.html","🎨"],
     ["Paramètres","administration.html?section=settings","⚙️"]
   ];
