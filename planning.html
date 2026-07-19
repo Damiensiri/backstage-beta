@@ -10,6 +10,7 @@
     </title>
     <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260719-1" type="text/css">
     <link rel="stylesheet" href="assets/css/planning.css?v=20260719-2" type="text/css">
+    <link rel="stylesheet" href="assets/css/planning-enhancements.css?v=20260719-1" type="text/css">
   </head>
   <body>
     <main class="planning-shell">
@@ -45,7 +46,7 @@
             <p class="muted">
               Utilisez le bouton + directement dans une case pour ajouter une ou plusieurs tâches.
             </p>
-          </div><button id="refresh" class="secondary">Actualiser</button>
+          </div><label>Afficher <select id="taskFilter"><option value="all">Toutes</option><option value="todo">À faire</option><option value="completed">Réalisées</option><option value="overdue">En retard</option><option value="requests">Demandes paddock</option></select></label><button id="refresh" class="secondary">Actualiser</button>
         </div>
         <div id="board" class="board"></div>
       </section>

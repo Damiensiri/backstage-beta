@@ -1,0 +1,1 @@
+.task.overdue{border-color:#ff7777;background:#472832}.drop-target{outline:3px dashed #62df91;outline-offset:-5px}.task[draggable=true],.horse-head[draggable=true],.chip[draggable=true]{cursor:grab}.task[draggable=true]:active,.horse-head[draggable=true]:active{cursor:grabbing}
