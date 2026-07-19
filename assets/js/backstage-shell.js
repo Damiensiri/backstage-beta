@@ -4,6 +4,7 @@
     ["Espaces","administration.html?section=spaces","🏇"],
     ["Paddocks","paddocks.html","🗓️"],
     ["Liberté","liberte.html","🌿"],
+    ["Planning","planning.html","🐴"],
     ["À facturer","billing.html","💶"],
     ["Notifications","administration.html?section=notifications","🔔"],
     ["Horaires","administration.html?section=general","🕘"],
