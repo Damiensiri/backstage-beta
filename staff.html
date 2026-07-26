@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#090b0f">
   <title>Planning salariés — Backstage bêta</title>
   <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260726-1">
-  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-1">
+  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-2">
 </head>
 <body>
   <main class="staff-shell">
@@ -38,7 +38,19 @@
         <button type="submit">Ajouter le salarié</button>
       </form>
       <div id="employeeList" class="employee-list"></div>
-      <p class="staff-help">Quatre salariés actifs minimum. Touchez un nom pour le modifier.</p>
+      <p class="staff-help">Quatre salariés minimum. Touchez un nom pour le modifier ou × pour le supprimer avec ses heures.</p>
+    </section>
+
+    <section class="staff-panel copy-panel">
+      <div>
+        <p class="eyebrow">Copier-coller</p>
+        <h2>Reprendre les horaires d’une semaine</h2>
+        <p class="staff-help">La semaine de destination sera remplacée pour toute l’équipe.</p>
+      </div>
+      <label>Semaine source<select id="copySourceWeek"></select></label>
+      <span class="copy-arrow">→</span>
+      <label>Semaine de destination<select id="copyTargetWeek"></select></label>
+      <button id="copyWeek" type="button">Copier les heures</button>
     </section>
 
     <section class="staff-panel summary-panel">
@@ -49,7 +61,7 @@
       <div id="monthSummary" class="month-summary"></div>
     </section>
 
-    <section id="staffWeeks" class="staff-weeks" aria-live="polite"></section>
+    <section id="staffMonthGrid" class="staff-month-grid" aria-live="polite"></section>
   </main>
 
   <dialog id="shiftDialog">
@@ -65,7 +77,7 @@
           <option value="work">Travail</option>
           <option value="rest">Repos</option>
           <option value="leave">Congés</option>
-          <option value="sick">Arrêt de travail</option>
+          <option value="sick">Arrêt maladie</option>
           <option value="absence">Absence</option>
         </select>
       </label>
@@ -85,7 +97,7 @@
     </form>
   </dialog>
 
-  <script src="assets/js/staff.js?v=20260726-1"></script>
+  <script src="assets/js/staff.js?v=20260726-2"></script>
   <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
 </body>
 </html>

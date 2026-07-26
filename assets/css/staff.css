@@ -25,7 +25,10 @@ label{display:grid;gap:6px;color:#cbd5e1;font-size:.82rem;font-weight:750}
 .employee-chip{display:flex;align-items:center;gap:8px;min-height:43px;padding:8px 11px;border:1px solid #ffffff20;border-radius:14px;background:#ffffff08}
 .employee-dot{width:11px;height:11px;border-radius:50%;background:var(--employee-color)}
 .employee-chip button{min-height:auto;padding:3px 6px;background:none;color:#fff}
+.employee-chip .employee-delete{width:28px;height:28px;margin-left:2px;padding:0;border-radius:50%;background:#792f38;color:#fff;font-size:18px;line-height:1}
 .staff-help,.month-range{color:#9baabc;font-size:.78rem}
+.copy-panel{display:grid;grid-template-columns:minmax(230px,1fr) minmax(170px,.55fr) auto minmax(170px,.55fr) auto;align-items:end;gap:12px}
+.copy-panel h2{margin:0 0 4px;font-size:1.3rem}.copy-panel p{margin:0}.copy-arrow{align-self:end;padding-bottom:10px;color:#72dff4;font-size:1.6rem;font-weight:900}
 .month-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
 .summary-card{padding:13px;border:1px solid #ffffff18;border-left:4px solid var(--employee-color);border-radius:14px;background:#ffffff08}
 .summary-card strong{display:block;font-size:1.55rem}.summary-card span{color:#abb8c7;font-size:.78rem}
@@ -47,6 +50,20 @@ label{display:grid;gap:6px;color:#cbd5e1;font-size:.82rem;font-weight:750}
 .day-cell.status-rest .day-main{color:#d8e0e8}.day-cell.status-leave{background:#34455d}.day-cell.status-sick{background:#58232a}.day-cell.status-absence{background:#4a3420}
 .week-total{padding:10px;text-align:center;color:#fff;font-weight:900;background:#162131}
 .week-table tfoot td:first-child{padding:10px 14px;color:#aebdcd;font-size:.78rem}
+.month-card{overflow:hidden;border:1px solid #ffffff20;border-radius:22px;background:#111923;box-shadow:0 18px 45px #0004}
+.month-scroll{overflow:auto;max-height:74vh}
+.month-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.month-table th,.month-table td{border-right:1px solid #2e3b4c;border-bottom:1px solid #2e3b4c}
+.month-table thead th{position:sticky;top:0;z-index:3;height:54px;padding:8px;background:#182537;color:#fff;border-top:4px solid var(--employee-color,#72dff4);font-size:.78rem}
+.month-table thead th:first-child{left:0;z-index:4;width:105px}.month-table thead th:last-child{width:75px}
+.week-divider th{padding:6px 10px;background:#263951;color:#72dff4;text-align:left;font-size:.72rem;letter-spacing:.04em}
+.date-cell{position:sticky;left:0;z-index:2;width:105px;padding:7px 9px;background:#172332;color:#dce7f2;text-align:left;text-transform:capitalize;font-size:.72rem;white-space:nowrap}
+.month-cell{height:62px;padding:6px 8px;background:#111b27;vertical-align:top;cursor:pointer}
+.month-cell:hover{background:#172536}.month-cell.today{box-shadow:inset 0 0 0 2px #f5c760}
+.month-cell.status-leave{background:#34455d}.month-cell.status-sick{background:#58232a}.month-cell.status-absence{background:#4a3420}
+.rest-label{color:#718092;font-weight:650}.all-total{padding:7px;text-align:center;background:#152131;color:#b9c6d5;font-size:.72rem;font-weight:800}
+.month-table tfoot th,.month-table tfoot td{position:sticky;bottom:0;z-index:2;padding:9px 7px;background:#263951;color:#fff;text-align:center;font-size:.78rem;font-weight:900}
+.month-table tfoot th{left:0;z-index:3;text-align:left}
 dialog{width:min(620px,calc(100% - 24px));max-height:92dvh;padding:0;border:1px solid #ffffff2e;border-radius:22px;background:#101720;color:#fff;box-shadow:0 28px 90px #000b}
 dialog::backdrop{background:#02060bc9;backdrop-filter:blur(5px)}
 .shift-form{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px}
@@ -54,19 +71,25 @@ dialog::backdrop{background:#02060bc9;backdrop-filter:blur(5px)}
 .wide{grid-column:1/-1}.shift-hours{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:0;padding:13px;border:1px solid #344356;border-radius:14px}
 .shift-hours legend{padding:0 6px;color:#aebdcd;font-size:.78rem;font-weight:800}
 .shift-total{padding:12px;border-radius:13px;background:#ffffff09}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
-@media(max-width:720px){.staff-shell{padding-inline:11px}.staff-panel{padding:14px}.employee-form{grid-template-columns:1fr 80px}.employee-form button{grid-column:1/-1}.month-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-toolbar>*{flex:1}.staff-toolbar button:first-child,.staff-toolbar button:nth-child(3){flex:0 0 46px}.staff-toolbar .export{flex-basis:100%}.shift-form{grid-template-columns:1fr}.shift-hours{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.copy-panel{grid-template-columns:1fr 1fr}.copy-panel>div{grid-column:1/-1}.copy-arrow{display:none}.copy-panel button{grid-column:1/-1}}
+@media(max-width:720px){.staff-shell{padding-inline:11px}.staff-panel{padding:14px}.employee-form{grid-template-columns:1fr 80px}.employee-form button{grid-column:1/-1}.month-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-toolbar>*{flex:1}.staff-toolbar button:first-child,.staff-toolbar button:nth-child(3){flex:0 0 46px}.staff-toolbar .export{flex-basis:100%}.copy-panel{grid-template-columns:1fr}.copy-panel>*{grid-column:1!important}.shift-form{grid-template-columns:1fr}.shift-hours{grid-template-columns:1fr 1fr}.month-scroll{max-height:68vh}}
 @media print{
-  @page{size:A4 landscape;margin:8mm}
+  @page{size:A4 portrait;margin:5mm}
   body{background:#fff;color:#000}
-  .backstage-menu-button,.backstage-menu,.backstage-menu-overlay,.staff-toolbar,.employee-panel,.staff-status,.staff-help,.beta-pill{display:none!important}
+  .backstage-menu-button,.backstage-menu,.backstage-menu-overlay,.staff-toolbar,.employee-panel,.copy-panel,.staff-status,.staff-help,.beta-pill{display:none!important}
   .staff-shell{width:100%;padding:0}
-  .staff-header{padding:0;margin-bottom:8mm}.staff-header h1{font-size:24pt}.staff-header>p:last-child{display:none}
-  .staff-panel,.week-card{border:1px solid #777;background:#fff;box-shadow:none;color:#000}
-  .summary-panel{padding:8px}.month-summary{grid-template-columns:repeat(4,1fr)}
-  .summary-card{border-color:#bbb;background:#fff;color:#000}.summary-card span,.month-range{color:#333}
-  .week-card{break-after:page;page-break-after:always;border-radius:0}.week-card:last-child{break-after:auto;page-break-after:auto}
-  .week-heading,.week-table th,.week-total{background:#e9eef4!important;color:#000!important}
-  .week-table{min-width:0}.week-table th:first-child{width:110px}
-  .week-table th,.week-table td{border-color:#777}.day-cell{height:72px;background:#fff!important;color:#000!important}
-  .day-main,.week-total,.week-table td.employee-name{color:#000!important}.day-total{color:#08732c!important}.day-note{color:#7a4b00!important}
+  .staff-header{padding:0;margin:0 0 2mm}.staff-header .eyebrow,.staff-header>p:last-child{display:none}.staff-header h1{font-size:14pt}
+  .summary-panel{margin:0 0 2mm;padding:2mm;border:1px solid #777;background:#fff;box-shadow:none;color:#000}
+  .panel-heading h2{font-size:11pt}.month-summary{grid-template-columns:repeat(4,1fr);gap:1mm;margin-top:1mm}
+  .summary-card{padding:1mm 1.5mm;border-color:#999;border-radius:0;background:#fff;color:#000}.summary-card strong{font-size:8pt}.summary-card span,.month-range{color:#333;font-size:5.5pt}
+  .month-card{overflow:visible;border:1px solid #555;border-radius:0;background:#fff;box-shadow:none}
+  .month-scroll{overflow:visible;max-height:none}.month-table{min-width:0!important;width:100%;font-size:5.3pt;table-layout:fixed}
+  .month-table th,.month-table td{border-color:#888}.month-table thead th{position:static;height:auto;padding:1mm .5mm;border-top-width:1px;background:#e6edf4!important;color:#000;font-size:5.5pt}
+  .month-table thead th:first-child{position:static;width:17mm}.month-table thead th:last-child{width:11mm}
+  .week-divider th{padding:.45mm 1mm;background:#dce7f1!important;color:#000;font-size:5pt}
+  .date-cell{position:static;width:17mm;padding:.55mm 1mm;background:#f1f4f7!important;color:#000;font-size:5pt}
+  .month-cell{height:auto;min-height:0;padding:.45mm .7mm;background:#fff!important;color:#000!important}
+  .day-main{color:#000!important;font-size:5.2pt;line-height:1.12}.day-total{display:inline;margin:0 0 0 1mm;color:#08732c!important;font-size:4.8pt}
+  .day-note{display:none}.rest-label{color:#666!important}.all-total{padding:.4mm;background:#f1f4f7!important;color:#000;font-size:4.8pt}
+  .month-table tfoot th,.month-table tfoot td{position:static;padding:.7mm;background:#dce7f1!important;color:#000;font-size:5.2pt}
 }

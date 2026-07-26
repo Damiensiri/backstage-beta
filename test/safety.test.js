@@ -18,6 +18,7 @@ const billingScript=fs.readFileSync("assets/js/billing.js","utf8");
 const homeSummary=fs.readFileSync("assets/js/home-summary.js","utf8");
 const staff=fs.readFileSync("staff.html","utf8");
 const staffScript=fs.readFileSync("assets/js/staff.js","utf8");
+const staffStyles=fs.readFileSync("assets/css/staff.css","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
@@ -122,6 +123,10 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staff,/id="exportStaffPdf"/);
   assert.match(staffScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
   assert.match(staffScript,/api\/admin\/staff-planning/);
+  assert.match(staffScript,/staff-planning\/copy-week/);
+  assert.match(staffScript,/method:"DELETE"/);
+  assert.match(staffScript,/rest-label">Repos/);
   assert.match(staffScript,/window\.print\(\)/);
+  assert.match(staffStyles,/@page\{size:A4 portrait/);
   assert.doesNotMatch(staff+staffScript,/firebase|prod/i);
 });
