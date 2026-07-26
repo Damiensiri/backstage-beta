@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#090b0f">
+  <title>Planning salariés — Backstage bêta</title>
+  <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260726-1">
+  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-1">
+</head>
+<body>
+  <main class="staff-shell">
+    <header class="staff-header">
+      <span class="beta-pill">BÊTA · D1</span>
+      <p class="eyebrow">Organisation de l’équipe</p>
+      <h1>Planning mensuel des salariés</h1>
+      <p>Les semaines, les jours et les totaux sont calculés automatiquement. Vous restez maître de chaque horaire.</p>
+    </header>
+
+    <p id="staffStatus" class="staff-status" role="status"></p>
+
+    <section class="staff-panel staff-toolbar">
+      <button id="previousMonth" type="button" aria-label="Mois précédent">‹</button>
+      <label>Mois <input id="staffMonth" type="month"></label>
+      <button id="nextMonth" type="button" aria-label="Mois suivant">›</button>
+      <button id="refreshStaff" class="secondary" type="button">Actualiser</button>
+      <button id="exportStaffPdf" class="export" type="button">Exporter / partager en PDF</button>
+    </section>
+
+    <section class="staff-panel employee-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Équipe</p><h2>Salariés actifs</h2></div>
+        <button id="toggleEmployeeForm" class="secondary" type="button">Ajouter</button>
+      </div>
+      <form id="employeeForm" class="employee-form" hidden>
+        <label>Nom<input id="employeeName" maxlength="80" required placeholder="Prénom ou nom"></label>
+        <label>Couleur<input id="employeeColor" type="color" value="#F27D2C"></label>
+        <button type="submit">Ajouter le salarié</button>
+      </form>
+      <div id="employeeList" class="employee-list"></div>
+      <p class="staff-help">Quatre salariés actifs minimum. Touchez un nom pour le modifier.</p>
+    </section>
+
+    <section class="staff-panel summary-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Récapitulatif</p><h2 id="monthTitle">Mois</h2></div>
+        <span id="monthRange" class="month-range"></span>
+      </div>
+      <div id="monthSummary" class="month-summary"></div>
+    </section>
+
+    <section id="staffWeeks" class="staff-weeks" aria-live="polite"></section>
+  </main>
+
+  <dialog id="shiftDialog">
+    <form id="shiftForm" class="shift-form">
+      <div class="dialog-heading">
+        <div><p class="eyebrow" id="shiftEmployee"></p><h2 id="shiftDate">Journée</h2></div>
+        <button id="closeShiftDialog" class="secondary close-dialog" type="button">×</button>
+      </div>
+      <input id="shiftEmployeeId" type="hidden">
+      <input id="shiftIsoDate" type="hidden">
+      <label class="wide">Type de journée
+        <select id="shiftType">
+          <option value="work">Travail</option>
+          <option value="rest">Repos</option>
+          <option value="leave">Congés</option>
+          <option value="sick">Arrêt de travail</option>
+          <option value="absence">Absence</option>
+        </select>
+      </label>
+      <fieldset id="shiftHours" class="shift-hours wide">
+        <legend>Horaires</legend>
+        <label>Matin — début<input id="morningStart" type="time"></label>
+        <label>Matin — fin<input id="morningEnd" type="time"></label>
+        <label>Après-midi — début<input id="afternoonStart" type="time"></label>
+        <label>Après-midi — fin<input id="afternoonEnd" type="time"></label>
+      </fieldset>
+      <label class="wide">Note<input id="shiftNote" maxlength="200" placeholder="Facultative"></label>
+      <div class="shift-total wide">Total de la journée : <strong id="shiftTotal">0h00</strong></div>
+      <div class="dialog-actions wide">
+        <button type="submit">Enregistrer</button>
+        <button id="deleteShift" class="danger" type="button">Effacer la journée</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="assets/js/staff.js?v=20260726-1"></script>
+  <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
+</body>
+</html>

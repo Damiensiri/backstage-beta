@@ -1,0 +1,72 @@
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{min-height:100vh;margin:0;background:radial-gradient(circle at 88% 0,#263a55 0,transparent 32rem),#090b0f;color:#f7f9fc;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{min-height:44px;padding:10px 15px;border:0;border-radius:13px;background:#5ee08c;color:#07130c;font-weight:850;cursor:pointer}
+button.secondary{border:1px solid #ffffff25;background:#ffffff0c;color:#eef4fa}
+button.export{background:#f5c760;color:#201703}
+button.danger{background:#7a3038;color:#fff}
+button:disabled{opacity:.55;cursor:wait}
+input,select{width:100%;min-height:44px;padding:9px 11px;border:1px solid #40516a;border-radius:12px;background:#0c141e;color:#fff}
+label{display:grid;gap:6px;color:#cbd5e1;font-size:.82rem;font-weight:750}
+.staff-shell{width:min(1500px,100%);margin:auto;padding:calc(28px + env(safe-area-inset-top)) 18px calc(48px + env(safe-area-inset-bottom))}
+.staff-header{padding-right:62px}
+.staff-header h1{max-width:900px;margin:0;font-size:clamp(2rem,6vw,4.6rem);line-height:1}
+.staff-header>p:last-child{max-width:760px;margin:14px 0 0;color:#b8c4d2;line-height:1.5}
+.staff-status{min-height:24px;margin:14px 2px;color:#a9b5c4}
+.staff-status.success{color:#75e59b}.staff-status.error{color:#ff9595}
+.staff-panel{margin:0 0 16px;padding:17px;border:1px solid #ffffff20;border-radius:22px;background:linear-gradient(145deg,#17212e,#10161f);box-shadow:0 18px 45px #0004}
+.staff-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.staff-toolbar label{min-width:180px}.staff-toolbar button:first-child,.staff-toolbar button:nth-child(3){width:48px;padding:0;font-size:28px}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.panel-heading h2{margin:0;font-size:1.5rem}.eyebrow{margin:0 0 4px;color:#91a2b5;font-size:.72rem;font-weight:850;letter-spacing:.11em;text-transform:uppercase}
+.employee-form{display:grid;grid-template-columns:minmax(180px,1fr) 90px auto;align-items:end;gap:10px;margin:15px 0}
+.employee-list{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.employee-chip{display:flex;align-items:center;gap:8px;min-height:43px;padding:8px 11px;border:1px solid #ffffff20;border-radius:14px;background:#ffffff08}
+.employee-dot{width:11px;height:11px;border-radius:50%;background:var(--employee-color)}
+.employee-chip button{min-height:auto;padding:3px 6px;background:none;color:#fff}
+.staff-help,.month-range{color:#9baabc;font-size:.78rem}
+.month-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.summary-card{padding:13px;border:1px solid #ffffff18;border-left:4px solid var(--employee-color);border-radius:14px;background:#ffffff08}
+.summary-card strong{display:block;font-size:1.55rem}.summary-card span{color:#abb8c7;font-size:.78rem}
+.staff-weeks{display:grid;gap:18px}
+.week-card{overflow:hidden;border:1px solid #ffffff20;border-radius:22px;background:#111923;box-shadow:0 18px 45px #0004}
+.week-heading{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;background:#192535}
+.week-heading h2{margin:0;color:#72dff4;font-size:1.2rem}.week-heading span{color:#aebdcd;font-size:.78rem}
+.week-scroll{overflow-x:auto}
+.week-table{width:100%;min-width:980px;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.week-table th,.week-table td{border-right:1px solid #2e3b4c;border-bottom:1px solid #2e3b4c}
+.week-table th{padding:10px 7px;background:#0f1721;color:#dce7f2;font-size:.76rem}
+.week-table th:first-child{width:150px;text-align:left;padding-left:14px}
+.week-table th.outside-month{color:#6d7a88}
+.week-table td.employee-name{padding:12px 10px 12px 14px;border-left:5px solid var(--employee-color);font-weight:850}
+.day-cell{height:92px;padding:7px;background:#111b27;vertical-align:top;cursor:pointer}
+.day-cell:hover{background:#172536}.day-cell.outside-month{opacity:.48}.day-cell.today{box-shadow:inset 0 0 0 2px #f5c760}
+.day-main{display:block;color:#fff;font-size:.78rem;font-weight:800;line-height:1.35}.day-total{display:block;margin-top:5px;color:#70e09a;font-size:.86rem;font-weight:900}
+.day-note{display:block;margin-top:4px;color:#f6c96d;font-size:.67rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-cell.status-rest .day-main{color:#d8e0e8}.day-cell.status-leave{background:#34455d}.day-cell.status-sick{background:#58232a}.day-cell.status-absence{background:#4a3420}
+.week-total{padding:10px;text-align:center;color:#fff;font-weight:900;background:#162131}
+.week-table tfoot td:first-child{padding:10px 14px;color:#aebdcd;font-size:.78rem}
+dialog{width:min(620px,calc(100% - 24px));max-height:92dvh;padding:0;border:1px solid #ffffff2e;border-radius:22px;background:#101720;color:#fff;box-shadow:0 28px 90px #000b}
+dialog::backdrop{background:#02060bc9;backdrop-filter:blur(5px)}
+.shift-form{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px}
+.dialog-heading{grid-column:1/-1;display:flex;align-items:start;justify-content:space-between;gap:12px}.dialog-heading h2{margin:0}.close-dialog{min-width:44px;padding:0;font-size:24px}
+.wide{grid-column:1/-1}.shift-hours{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:0;padding:13px;border:1px solid #344356;border-radius:14px}
+.shift-hours legend{padding:0 6px;color:#aebdcd;font-size:.78rem;font-weight:800}
+.shift-total{padding:12px;border-radius:13px;background:#ffffff09}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
+@media(max-width:720px){.staff-shell{padding-inline:11px}.staff-panel{padding:14px}.employee-form{grid-template-columns:1fr 80px}.employee-form button{grid-column:1/-1}.month-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-toolbar>*{flex:1}.staff-toolbar button:first-child,.staff-toolbar button:nth-child(3){flex:0 0 46px}.staff-toolbar .export{flex-basis:100%}.shift-form{grid-template-columns:1fr}.shift-hours{grid-template-columns:1fr 1fr}}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  body{background:#fff;color:#000}
+  .backstage-menu-button,.backstage-menu,.backstage-menu-overlay,.staff-toolbar,.employee-panel,.staff-status,.staff-help,.beta-pill{display:none!important}
+  .staff-shell{width:100%;padding:0}
+  .staff-header{padding:0;margin-bottom:8mm}.staff-header h1{font-size:24pt}.staff-header>p:last-child{display:none}
+  .staff-panel,.week-card{border:1px solid #777;background:#fff;box-shadow:none;color:#000}
+  .summary-panel{padding:8px}.month-summary{grid-template-columns:repeat(4,1fr)}
+  .summary-card{border-color:#bbb;background:#fff;color:#000}.summary-card span,.month-range{color:#333}
+  .week-card{break-after:page;page-break-after:always;border-radius:0}.week-card:last-child{break-after:auto;page-break-after:auto}
+  .week-heading,.week-table th,.week-total{background:#e9eef4!important;color:#000!important}
+  .week-table{min-width:0}.week-table th:first-child{width:110px}
+  .week-table th,.week-table td{border-color:#777}.day-cell{height:72px;background:#fff!important;color:#000!important}
+  .day-main,.week-total,.week-table td.employee-name{color:#000!important}.day-total{color:#08732c!important}.day-note{color:#7a4b00!important}
+}
