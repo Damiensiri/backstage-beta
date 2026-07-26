@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#090b0f">
   <title>Planning salariés — Backstage bêta</title>
   <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260726-1">
-  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-6">
+  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-7">
 </head>
 <body>
   <main class="staff-shell">
@@ -19,26 +19,18 @@
 
     <p id="staffStatus" class="staff-status" role="status"></p>
 
+    <nav class="staff-tabs" aria-label="Sections du planning">
+      <button class="staff-tab active" type="button" data-section="planning">Planning</button>
+      <button class="staff-tab" type="button" data-section="settings">Paramètres</button>
+    </nav>
+
+    <section id="planningSection">
     <section class="staff-panel staff-toolbar">
       <button id="previousMonth" type="button" aria-label="Mois précédent">‹</button>
       <label>Mois <input id="staffMonth" type="month"></label>
       <button id="nextMonth" type="button" aria-label="Mois suivant">›</button>
       <button id="refreshStaff" class="secondary" type="button">Actualiser</button>
       <button id="exportStaffPdf" class="export" type="button">Exporter / partager en PDF</button>
-    </section>
-
-    <section class="staff-panel employee-panel">
-      <div class="panel-heading">
-        <div><p class="eyebrow">Équipe</p><h2>Salariés actifs</h2></div>
-        <button id="toggleEmployeeForm" class="secondary" type="button">Ajouter</button>
-      </div>
-      <form id="employeeForm" class="employee-form" hidden>
-        <label>Nom<input id="employeeName" maxlength="80" required placeholder="Prénom ou nom"></label>
-        <label>Couleur<input id="employeeColor" type="color" value="#F27D2C"></label>
-        <button type="submit">Ajouter le salarié</button>
-      </form>
-      <div id="employeeList" class="employee-list"></div>
-      <p class="staff-help">Ajoutez autant de salariés que nécessaire. Touchez un nom pour le modifier ou × pour le supprimer avec ses heures.</p>
     </section>
 
     <section class="staff-panel copy-panel">
@@ -53,6 +45,38 @@
       <button id="copyWeek" type="button">Copier les heures</button>
     </section>
 
+    <section class="staff-panel summary-panel compact-summary">
+      <div class="compact-summary-title">
+        <strong id="monthTitle">Mois</strong>
+        <span id="monthRange" class="month-range"></span>
+      </div>
+      <div id="monthSummary" class="month-summary"></div>
+    </section>
+
+    <nav class="view-tabs" aria-label="Vues du planning">
+      <button class="view-tab active" type="button" data-view="entry">Saisie quotidienne</button>
+      <button class="view-tab" type="button" data-view="overview">Vue mensuelle</button>
+    </nav>
+
+    <section id="staffMonthGrid" class="staff-month-grid" aria-live="polite"></section>
+    <section id="staffOverviewGrid" class="staff-weeks" aria-live="polite" hidden></section>
+    </section>
+
+    <section id="settingsSection" hidden>
+    <section class="staff-panel employee-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Équipe</p><h2>Salariés actifs</h2></div>
+        <button id="toggleEmployeeForm" class="secondary" type="button">Ajouter</button>
+      </div>
+      <form id="employeeForm" class="employee-form" hidden>
+        <label>Nom<input id="employeeName" maxlength="80" required placeholder="Prénom ou nom"></label>
+        <label>Couleur<input id="employeeColor" type="color" value="#F27D2C"></label>
+        <button type="submit">Ajouter le salarié</button>
+      </form>
+      <div id="employeeList" class="employee-list"></div>
+      <p class="staff-help">Ajoutez autant de salariés que nécessaire. Touchez un nom pour le modifier ou × pour le supprimer avec ses heures.</p>
+    </section>
+
     <section class="staff-panel google-panel">
       <div>
         <p class="eyebrow">Votre organisation</p>
@@ -65,16 +89,7 @@
         <label class="google-switch"><input id="googleToggle" type="checkbox" checked> Afficher dans le planning</label>
       </div>
     </section>
-
-    <section class="staff-panel summary-panel">
-      <div class="panel-heading">
-        <div><p class="eyebrow">Récapitulatif</p><h2 id="monthTitle">Mois</h2></div>
-        <span id="monthRange" class="month-range"></span>
-      </div>
-      <div id="monthSummary" class="month-summary"></div>
     </section>
-
-    <section id="staffMonthGrid" class="staff-month-grid" aria-live="polite"></section>
   </main>
 
   <dialog id="shiftDialog">
@@ -88,6 +103,7 @@
       <label class="wide">Type de journée
         <select id="shiftType">
           <option value="work">Travail</option>
+          <option value="cfa">CFA — 7h</option>
           <option value="rest">Repos</option>
           <option value="leave">Congés</option>
           <option value="sick">Arrêt maladie</option>
@@ -101,6 +117,12 @@
         <label>Après-midi — début<input id="afternoonStart" type="time"></label>
         <label>Après-midi — fin<input id="afternoonEnd" type="time"></label>
       </fieldset>
+      <fieldset id="shiftRange" class="shift-range wide" hidden>
+        <legend>Période complète</legend>
+        <label>Date de début<input id="shiftRangeStart" type="date"></label>
+        <label>Date de fin<input id="shiftRangeEnd" type="date"></label>
+        <p>Chaque journée de cette période sera enregistrée automatiquement.</p>
+      </fieldset>
       <label class="wide">Note<input id="shiftNote" maxlength="200" placeholder="Facultative"></label>
       <div class="shift-total wide">Total de la journée : <strong id="shiftTotal">0h00</strong></div>
       <div class="dialog-actions wide">
@@ -110,7 +132,7 @@
     </form>
   </dialog>
 
-  <script src="assets/js/staff.js?v=20260726-6"></script>
+  <script src="assets/js/staff.js?v=20260726-7"></script>
   <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
 </body>
 </html>

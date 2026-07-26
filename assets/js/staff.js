@@ -2,7 +2,7 @@
 "use strict";
 const API=(localStorage.getItem("notifications_beta_api_url")||"https://ecurie-notifications-beta.damiensiri-pro.workers.dev").replace(/\/$/,"");
 const TOKEN=localStorage.getItem("notifications_beta_admin_token")||"";
-const TYPES={work:"Travail",rest:"Repos",leave:"Congés",sick:"Arrêt maladie",absence:"Absence"};
+const TYPES={work:"Travail",cfa:"CFA",rest:"Repos",leave:"Congés",sick:"Arrêt maladie",absence:"Absence"};
 const $=id=>document.getElementById(id);
 let state={employees:[],shifts:[],range:null,month:"",google:{configured:false,connected:false,events:[],visible:true}};
 
@@ -24,7 +24,10 @@ function dateLabel(value){return new Intl.DateTimeFormat("fr-FR",{weekday:"long"
 function rowDate(value){return new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit",timeZone:"UTC"}).format(parseDate(value)).replace(".","")}
 function shortDate(value){return new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"2-digit",timeZone:"UTC"}).format(parseDate(value))}
 function minutes(start,end){if(!start||!end)return 0;const [sh,sm]=start.split(":").map(Number),[eh,em]=end.split(":").map(Number);return Math.max(0,eh*60+em-sh*60-sm)}
-function shiftMinutes(shift){return shift?.status==="work"?minutes(shift.morningStart,shift.morningEnd)+minutes(shift.afternoonStart,shift.afternoonEnd):0}
+function shiftMinutes(shift){
+  if(shift?.status==="cfa")return 420;
+  return shift?.status==="work"?minutes(shift.morningStart,shift.morningEnd)+minutes(shift.afternoonStart,shift.afternoonEnd):0;
+}
 function duration(value){const total=Math.max(0,Number(value)||0);return`${Math.floor(total/60)}h${String(total%60).padStart(2,"0")}`}
 function shiftKey(employeeId,date){return`${employeeId}:${date}`}
 function shiftMap(){return new Map(state.shifts.map(shift=>[shiftKey(shift.employeeId,shift.date),shift]))}
@@ -65,6 +68,7 @@ function parseDirectEntry(value,employeeId,date){
   const text=String(value||"").trim();const normalized=normalizeWord(text);
   if(!text)return{empty:true};
   if(["repos","repo"].includes(normalized))return{employeeId,date,status:"rest"};
+  if(normalized==="cfa")return{employeeId,date,status:"cfa"};
   if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
   if(normalized==="at"||normalized.includes("arret")||normalized.includes("maladie"))return{employeeId,date,status:"sick"};
   if(normalized.includes("absence"))return{employeeId,date,status:"absence"};
@@ -74,7 +78,7 @@ function parseDirectEntry(value,employeeId,date){
     const from=match[1].padStart(4,"0"),to=match[2].padStart(4,"0");
     return[from.slice(0,2),from.slice(2),to.slice(0,2),to.slice(2)];
   }):written.map(match=>[match[1],match[2]||"0",match[3],match[4]||"0"]);
-  if(!rawRanges.length||rawRanges.length>2)return{error:"Écrivez 0730 1200 / 1400 1700, Congés ou Arrêt maladie"};
+  if(!rawRanges.length||rawRanges.length>2)return{error:"Écrivez 0730 1200 / 1400 1700, CFA, Congés ou Arrêt maladie"};
   const ranges=rawRanges.map(parts=>{
     const start=`${String(Number(parts[0])).padStart(2,"0")}:${String(Number(parts[1])).padStart(2,"0")}`;
     const end=`${String(Number(parts[2])).padStart(2,"0")}:${String(Number(parts[3])).padStart(2,"0")}`;
@@ -93,6 +97,11 @@ function parseDirectEntry(value,employeeId,date){
 }
 function monthTotal(employeeId){
   return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date.startsWith(state.month)).reduce((sum,shift)=>sum+shiftMinutes(shift),0);
+}
+function weekEmployeeTotal(employeeId,monday){
+  const end=addDays(monday,6);
+  return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date>=monday&&shift.date<=end)
+    .reduce((sum,shift)=>sum+shiftMinutes(shift),0);
 }
 function googleEventsByDate(){
   const result=new Map();
@@ -154,7 +163,7 @@ function renderSummary(){
   $("monthTitle").textContent=monthLabel(state.month).replace(/^./,letter=>letter.toUpperCase());
   $("monthRange").textContent=`01/${state.month.slice(5)} → ${monthDates().length}/${state.month.slice(5)}`;
   $("monthSummary").innerHTML=state.employees.map(employee=>`<article class="summary-card" style="--employee-color:${employee.color}">
-    <span>${esc(employee.name)}</span><strong>${duration(monthTotal(employee.id))}</strong><span>sur le mois</span>
+    <span>${esc(employee.name)}</span><strong>${duration(monthTotal(employee.id))}</strong>
   </article>`).join("");
 }
 function renderCopyControls(){
@@ -166,7 +175,7 @@ function renderMonth(){
   const map=shiftMap();const today=new Date().toISOString().slice(0,10);const dates=monthDates();
   const googleMap=googleEventsByDate();const showGoogle=state.google.connected&&state.google.visible;
   let rows="";let currentWeek="";
-  dates.forEach(date=>{
+  dates.forEach((date,index)=>{
     const monday=addDays(date,-((parseDate(date).getUTCDay()+6)%7));
     if(monday!==currentWeek){
       currentWeek=monday;
@@ -186,6 +195,12 @@ function renderMonth(){
     </div>`).join("")||'<span class="google-empty">—</span>'}</td>`:"";
     const dayTotal=state.employees.reduce((sum,employee)=>sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0);
     rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}${googleCell}<td class="all-total">${dayTotal?duration(dayTotal):"—"}</td></tr>`;
+    const nextDate=dates[index+1];const nextMonday=nextDate?addDays(nextDate,-((parseDate(nextDate).getUTCDay()+6)%7)):"";
+    if(!nextDate||nextMonday!==monday){
+      const totals=state.employees.map(employee=>`<td>${duration(weekEmployeeTotal(employee.id,monday))}</td>`).join("");
+      const teamTotal=state.employees.reduce((sum,employee)=>sum+weekEmployeeTotal(employee.id,monday),0);
+      rows+=`<tr class="weekly-total"><th>Total semaine ${isoWeek(monday)}</th>${totals}${showGoogle?'<td class="google-column">—</td>':""}<td>${duration(teamTotal)}</td></tr>`;
+    }
   });
   const employeeTotals=state.employees.map(employee=>`<td>${duration(monthTotal(employee.id))}</td>`).join("");
   $("staffMonthGrid").innerHTML=`<article class="month-card"><div class="month-scroll">
@@ -195,7 +210,35 @@ function renderMonth(){
     </table></div></article>`;
   document.querySelectorAll(".month-cell").forEach(cell=>cell.onclick=event=>{if(!event.target.closest(".cell-details"))beginInlineEdit(cell)});
   document.querySelectorAll(".cell-details").forEach(button=>button.onclick=event=>{event.stopPropagation();openShift(Number(button.dataset.detailsEmployee),button.dataset.detailsDate)});
-  renderEmployees();renderSummary();renderCopyControls();
+  renderOverview(map,today);renderEmployees();renderSummary();renderCopyControls();
+}
+function renderOverview(map,today){
+  $("staffOverviewGrid").innerHTML=weeks().map(days=>{
+    const monday=days[0];
+    const head=days.map(date=>`<th class="${date.startsWith(state.month)?"":"outside-month"}">${rowDate(date)}</th>`).join("");
+    const rows=state.employees.map(employee=>{
+      const cells=days.map(date=>{
+        const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
+        return`<td class="day-cell status-${shift?.status||"empty"}${date===today?" today":""}${date.startsWith(state.month)?"":" outside-month"}"
+          data-overview-employee="${employee.id}" data-overview-date="${date}">
+          <span class="day-main">${workText(shift)}</span>${total?`<span class="day-total">${duration(total)}</span>`:""}
+          ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
+        </td>`;
+      }).join("");
+      return`<tr><td class="employee-name" style="--employee-color:${employee.color}">${esc(employee.name)}</td>${cells}
+        <td class="week-total">${duration(weekEmployeeTotal(employee.id,monday))}</td></tr>`;
+    }).join("");
+    const dayTotals=days.map(date=>`<td class="week-total">${duration(state.employees.reduce((sum,employee)=>
+      sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0))}</td>`).join("");
+    const teamTotal=state.employees.reduce((sum,employee)=>sum+weekEmployeeTotal(employee.id,monday),0);
+    return`<article class="week-card"><header class="week-heading"><h2>Semaine ${isoWeek(monday)}</h2>
+      <span>${shortDate(monday)} au ${shortDate(days[6])}</span></header><div class="week-scroll">
+      <table class="week-table"><thead><tr><th>Salarié</th>${head}<th>Total</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr><td>Total équipe</td>${dayTotals}<td class="week-total">${duration(teamTotal)}</td></tr></tfoot>
+      </table></div></article>`;
+  }).join("");
+  document.querySelectorAll("[data-overview-employee]").forEach(cell=>cell.onclick=()=>openShift(
+    Number(cell.dataset.overviewEmployee),cell.dataset.overviewDate));
 }
 function beginInlineEdit(cell){
   if(cell.querySelector(".inline-entry"))return;
@@ -236,14 +279,17 @@ async function load(silent=false){
   catch(error){setStatus(error.message,"error")}
 }
 function updateTotal(){
-  const status=$("shiftType").value;const total=status==="work"?
+  const status=$("shiftType").value;const total=status==="cfa"?420:status==="work"?
     minutes($("morningStart").value,$("morningEnd").value)+minutes($("afternoonStart").value,$("afternoonEnd").value):0;
-  $("shiftHours").hidden=status!=="work";$("shiftTotal").textContent=duration(total);
+  $("shiftHours").hidden=status!=="work";
+  $("shiftRange").hidden=!["leave","sick"].includes(status);
+  $("shiftTotal").textContent=duration(total);
 }
 function openShift(employeeId,date){
   const employee=state.employees.find(item=>item.id===employeeId);const shift=state.shifts.find(item=>item.employeeId===employeeId&&item.date===date);
   $("shiftEmployeeId").value=employeeId;$("shiftIsoDate").value=date;$("shiftEmployee").textContent=employee?.name||"";
   $("shiftDate").textContent=dateLabel(date);$("shiftType").value=shift?.status||"work";
+  $("shiftRangeStart").value=date;$("shiftRangeEnd").value=date;
   $("morningStart").value=shift?.morningStart||"";$("morningEnd").value=shift?.morningEnd||"";
   $("afternoonStart").value=shift?.afternoonStart||"";$("afternoonEnd").value=shift?.afternoonEnd||"";
   $("shiftNote").value=shift?.note||"";$("deleteShift").hidden=!shift;updateTotal();$("shiftDialog").showModal();
@@ -261,11 +307,24 @@ async function deleteEmployee(id){
   try{await api("/api/admin/staff-planning/employees/"+id,{method:"DELETE"});await load(true);setStatus("Salarié supprimé.","success")}
   catch(error){setStatus(error.message,"error")}
 }
+function selectSection(section){
+  $("planningSection").hidden=section!=="planning";
+  $("settingsSection").hidden=section!=="settings";
+  document.querySelectorAll("[data-section]").forEach(button=>button.classList.toggle("active",button.dataset.section===section));
+}
+function selectView(view){
+  $("staffMonthGrid").hidden=view!=="entry";
+  $("staffOverviewGrid").hidden=view!=="overview";
+  document.querySelectorAll("[data-view]").forEach(button=>button.classList.toggle("active",button.dataset.view===view));
+  localStorage.setItem("staff_beta_view",view);
+}
 
 $("staffMonth").value=currentMonth();
 $("previousMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()-1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("nextMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()+1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("staffMonth").onchange=()=>load();$("refreshStaff").onclick=()=>load();$("exportStaffPdf").onclick=()=>window.print();
+document.querySelectorAll("[data-section]").forEach(button=>button.onclick=()=>selectSection(button.dataset.section));
+document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>selectView(button.dataset.view));
 $("googleToggle").onchange=()=>{state.google.visible=$("googleToggle").checked;renderMonth();renderGooglePanel()};
 $("copyWeek").onclick=async()=>{
   const sourceStart=$("copySourceWeek").value,targetStart=$("copyTargetWeek").value;
@@ -281,7 +340,19 @@ $("shiftType").onchange=updateTotal;["morningStart","morningEnd","afternoonStart
 $("closeShiftDialog").onclick=()=>$("shiftDialog").close();
 $("shiftForm").onsubmit=async event=>{event.preventDefault();const payload={employeeId:Number($("shiftEmployeeId").value),date:$("shiftIsoDate").value,status:$("shiftType").value,
   morningStart:$("morningStart").value,morningEnd:$("morningEnd").value,afternoonStart:$("afternoonStart").value,afternoonEnd:$("afternoonEnd").value,note:$("shiftNote").value};
-  try{await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});$("shiftDialog").close();await load(true);setStatus("Journée enregistrée.","success")}catch(error){setStatus(error.message,"error")}};
+  try{
+    if(["leave","sick"].includes(payload.status)){
+      const result=await api("/api/admin/staff-planning/shift-range",{method:"PUT",body:JSON.stringify({
+        employeeId:payload.employeeId,status:payload.status,startDate:$("shiftRangeStart").value,
+        endDate:$("shiftRangeEnd").value,note:payload.note
+      })});
+      $("shiftDialog").close();await load(true);setStatus(`${result.dayCount} journée(s) enregistrée(s).`,"success");
+    }else{
+      await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});
+      $("shiftDialog").close();await load(true);setStatus("Journée enregistrée.","success");
+    }
+  }catch(error){setStatus(error.message,"error")}};
 $("deleteShift").onclick=async()=>{if(!confirm("Effacer cette journée ? Elle sera affichée comme Repos."))return;try{await api(`/api/admin/staff-planning/shifts/${$("shiftEmployeeId").value}/${$("shiftIsoDate").value}`,{method:"DELETE"});$("shiftDialog").close();await load(true);setStatus("Journée remise en repos.","success")}catch(error){setStatus(error.message,"error")}};
+selectView(localStorage.getItem("staff_beta_view")==="overview"?"overview":"entry");
 load();
 })();
