@@ -3,7 +3,6 @@
     ["Accueil","index.html","⌂"],
     ["Espaces","administration.html?section=spaces","🏇"],
     ["Planning","planning.html","🐴"],
-    ["Planning salariés","staff.html","👥"],
     ["Paddocks","paddocks.html","🗓️"],
     ["Liberté","liberte.html","🌿"],
     ["Notifications","administration.html?section=notifications","🔔"],
@@ -11,6 +10,7 @@
     ["Alertes","administration.html?section=home-alert","⚠️"],
     ["Commandes","orders.html","🧾"],
     ["Horaires","administration.html?section=general","🕘"],
+    ["Planning salariés","staff.html","👥"],
     ["Utilisateurs","users.html","👤"],
     ["Thèmes","https://damiensiri.github.io/push2-beta/admin.html","🎨"],
     ["Paramètres","administration.html?section=settings","⚙️"]
