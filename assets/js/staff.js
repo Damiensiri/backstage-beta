@@ -47,12 +47,13 @@ function monthDates(){
   const first=state.month+"-01";const date=parseDate(first);date.setUTCMonth(date.getUTCMonth()+1);date.setUTCDate(0);
   return Array.from({length:date.getUTCDate()},(_,index)=>`${state.month}-${String(index+1).padStart(2,"0")}`);
 }
+function displayHour(value){return String(value||"").replace(":","h")}
 function workText(shift){
   if(!shift)return'<span class="rest-label">Repos</span>';
   if(shift.status!=="work")return esc(TYPES[shift.status]||shift.status);
   const lines=[];
-  if(shift.morningStart&&shift.morningEnd)lines.push(`${shift.morningStart}–${shift.morningEnd}`);
-  if(shift.afternoonStart&&shift.afternoonEnd)lines.push(`${shift.afternoonStart}–${shift.afternoonEnd}`);
+  if(shift.morningStart&&shift.morningEnd)lines.push(`${displayHour(shift.morningStart)}-${displayHour(shift.morningEnd)}`);
+  if(shift.afternoonStart&&shift.afternoonEnd)lines.push(`${displayHour(shift.afternoonStart)}-${displayHour(shift.afternoonEnd)}`);
   return lines.join("<br>")||"Travail";
 }
 function directText(shift){
@@ -72,13 +73,13 @@ function parseDirectEntry(value,employeeId,date){
   if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
   if(normalized==="at"||normalized.includes("arret")||normalized.includes("maladie"))return{employeeId,date,status:"sick"};
   if(normalized.includes("absence"))return{employeeId,date,status:"absence"};
-  const compact=[...text.matchAll(/\b(\d{3,4})\s+(\d{3,4})\b/g)];
+  const compact=[...text.matchAll(/\b(\d{3,4})\s*[.\s]\s*(\d{3,4})\b/g)];
   const written=[...text.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
   const rawRanges=compact.length?compact.map(match=>{
     const from=match[1].padStart(4,"0"),to=match[2].padStart(4,"0");
     return[from.slice(0,2),from.slice(2),to.slice(0,2),to.slice(2)];
   }):written.map(match=>[match[1],match[2]||"0",match[3],match[4]||"0"]);
-  if(!rawRanges.length||rawRanges.length>2)return{error:"Écrivez 0730 1200 / 1400 1700, CFA, Congés ou Arrêt maladie"};
+  if(!rawRanges.length||rawRanges.length>2)return{error:"Écrivez 0700.1200/1300.1700, CFA, Congés ou Arrêt maladie"};
   const ranges=rawRanges.map(parts=>{
     const start=`${String(Number(parts[0])).padStart(2,"0")}:${String(Number(parts[1])).padStart(2,"0")}`;
     const end=`${String(Number(parts[2])).padStart(2,"0")}:${String(Number(parts[3])).padStart(2,"0")}`;
@@ -219,8 +220,8 @@ function renderOverview(map,today){
     const rows=state.employees.map(employee=>{
       const cells=days.map(date=>{
         const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
-        return`<td class="day-cell status-${shift?.status||"empty"}${date===today?" today":""}${date.startsWith(state.month)?"":" outside-month"}"
-          data-overview-employee="${employee.id}" data-overview-date="${date}">
+        return`<td class="day-cell overview-cell status-${shift?.status||"empty"}${date===today?" today":""}${date.startsWith(state.month)?"":" outside-month"}"
+          data-employee="${employee.id}" data-date="${date}">
           <span class="day-main">${workText(shift)}</span>${total?`<span class="day-total">${duration(total)}</span>`:""}
           ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
         </td>`;
@@ -237,15 +238,14 @@ function renderOverview(map,today){
       <tbody>${rows}</tbody><tfoot><tr><td>Total équipe</td>${dayTotals}<td class="week-total">${duration(teamTotal)}</td></tr></tfoot>
       </table></div></article>`;
   }).join("");
-  document.querySelectorAll("[data-overview-employee]").forEach(cell=>cell.onclick=()=>openShift(
-    Number(cell.dataset.overviewEmployee),cell.dataset.overviewDate));
+  document.querySelectorAll(".overview-cell").forEach(cell=>cell.onclick=()=>beginInlineEdit(cell));
 }
 function beginInlineEdit(cell){
   if(cell.querySelector(".inline-entry"))return;
   const employeeId=Number(cell.dataset.employee),date=cell.dataset.date;
   const shift=state.shifts.find(item=>item.employeeId===employeeId&&item.date===date);
   const input=document.createElement("input");input.className="inline-entry";input.type="text";
-  input.value=directText(shift);input.placeholder="0730 1200 / 1400 1700";
+  input.value=directText(shift);input.placeholder="0700.1200/1300.1700";
   cell.innerHTML="";cell.append(input);input.focus();input.select();
   let saving=false;
   let moveAfterSave=0;
@@ -261,7 +261,8 @@ function beginInlineEdit(cell){
       await load(true);setStatus(payload.empty?"Journée en repos.":"Case enregistrée.","success");
       if(moveAfterSave){
         const nextDate=addDays(date,moveAfterSave);
-        const nextCell=document.querySelector(`.month-cell[data-employee="${employeeId}"][data-date="${nextDate}"]`);
+        const cellSelector=cell.classList.contains("overview-cell")?".overview-cell":".month-cell";
+        const nextCell=document.querySelector(`${cellSelector}[data-employee="${employeeId}"][data-date="${nextDate}"]`);
         if(nextCell)beginInlineEdit(nextCell);
       }
     }catch(error){saving=false;setStatus(error.message,"error");renderMonth()}

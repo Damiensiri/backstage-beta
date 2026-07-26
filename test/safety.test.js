@@ -127,7 +127,8 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/method:"DELETE"/);
   assert.match(staffScript,/rest-label">Repos/);
   assert.match(staffScript,/function parseDirectEntry/);
-  assert.match(staffScript,/0730 1200 \/ 1400 1700/);
+  assert.match(staff,/0700\.1200\/1300\.1700/);
+  assert.match(staffScript,/0700\.1200\/1300\.1700/);
   assert.match(staffScript,/moveAfterSave/);
   assert.match(staffScript,/className="inline-entry"/);
   assert.match(staff,/CFA — 7h/);
@@ -138,6 +139,7 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/staff-planning\/shift-range/);
   assert.match(staffScript,/class="weekly-total"/);
   assert.match(staffScript,/function renderOverview/);
+  assert.match(staffScript,/overview-cell/);
   assert.match(staff,/calendrier public iCal/i);
   assert.match(staff,/lecture seule/i);
   assert.match(staffScript,/api\/admin\/google-calendar\/events/);
