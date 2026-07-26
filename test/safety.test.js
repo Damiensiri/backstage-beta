@@ -153,6 +153,7 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffStyles,/\.google-column/);
   assert.match(staffStyles,/@media print[\s\S]*\.google-column/);
   assert.match(staffStyles,/#staffOverviewGrid\{display:grid!important/);
+  assert.match(staffStyles,/\.day-cell\.status-leave\{background:#dceaff!important\}/);
   assert.match(staffScript,/window\.print\(\)/);
   assert.match(staffStyles,/@page\{size:A4 portrait/);
   assert.doesNotMatch(staff+staffScript,/firebase|prod/i);
