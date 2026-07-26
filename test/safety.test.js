@@ -121,6 +121,7 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(home,/href="staff\.html"/);
   assert.match(staff,/BÊTA · D1/);
   assert.match(staff,/id="exportStaffPdf"/);
+  assert.match(staff,/id="printEmployee"/);
   assert.match(staffScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
   assert.match(staffScript,/api\/admin\/staff-planning/);
   assert.match(staffScript,/staff-planning\/copy-week/);
@@ -149,6 +150,7 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.doesNotMatch(staffScript,/google-calendar\/connect/);
   assert.match(staffStyles,/\.google-column/);
   assert.match(staffStyles,/@media print[\s\S]*\.google-column/);
+  assert.match(staffStyles,/#staffOverviewGrid\{display:grid!important/);
   assert.match(staffScript,/window\.print\(\)/);
   assert.match(staffStyles,/@page\{size:A4 portrait/);
   assert.doesNotMatch(staff+staffScript,/firebase|prod/i);

@@ -96,9 +96,6 @@ function parseDirectEntry(value,employeeId,date){
   }
   return payload;
 }
-function monthTotal(employeeId){
-  return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date.startsWith(state.month)).reduce((sum,shift)=>sum+shiftMinutes(shift),0);
-}
 function weekEmployeeTotal(employeeId,monday){
   const end=addDays(monday,6);
   return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date>=monday&&shift.date<=end)
@@ -159,13 +156,10 @@ function renderEmployees(){
   </div>`).join("");
   document.querySelectorAll("[data-edit-employee]").forEach(button=>button.onclick=()=>editEmployee(Number(button.dataset.editEmployee)));
   document.querySelectorAll("[data-delete-employee]").forEach(button=>button.onclick=()=>deleteEmployee(Number(button.dataset.deleteEmployee)));
-}
-function renderSummary(){
-  $("monthTitle").textContent=monthLabel(state.month).replace(/^./,letter=>letter.toUpperCase());
-  $("monthRange").textContent=`01/${state.month.slice(5)} → ${monthDates().length}/${state.month.slice(5)}`;
-  $("monthSummary").innerHTML=state.employees.map(employee=>`<article class="summary-card" style="--employee-color:${employee.color}">
-    <span>${esc(employee.name)}</span><strong>${duration(monthTotal(employee.id))}</strong>
-  </article>`).join("");
+  const selected=$("printEmployee").value;
+  $("printEmployee").innerHTML='<option value="">Tous les salariés</option>'+state.employees.map(employee=>
+    `<option value="${employee.id}">${esc(employee.name)}</option>`).join("");
+  if([...$("printEmployee").options].some(option=>option.value===selected))$("printEmployee").value=selected;
 }
 function renderCopyControls(){
   const options=weeks().map(days=>`<option value="${days[0]}">Semaine ${isoWeek(days[0])} · ${shortDate(days[0])}</option>`).join("");
@@ -180,7 +174,7 @@ function renderMonth(){
     const monday=addDays(date,-((parseDate(date).getUTCDay()+6)%7));
     if(monday!==currentWeek){
       currentWeek=monday;
-      rows+=`<tr class="week-divider"><th colspan="${state.employees.length+2+(showGoogle?1:0)}">Semaine ${isoWeek(date)} · ${shortDate(monday)} au ${shortDate(addDays(monday,6))}</th></tr>`;
+      rows+=`<tr class="week-divider"><th colspan="${state.employees.length+1+(showGoogle?1:0)}">Semaine ${isoWeek(date)} · ${shortDate(monday)} au ${shortDate(addDays(monday,6))}</th></tr>`;
     }
     const cells=state.employees.map(employee=>{
       const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
@@ -194,24 +188,21 @@ function renderMonth(){
     const googleCell=showGoogle?`<td class="google-column google-events">${googleEvents.map(event=>`<div class="google-event">
       <strong>${esc(googleTime(event))}</strong><span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}
     </div>`).join("")||'<span class="google-empty">—</span>'}</td>`:"";
-    const dayTotal=state.employees.reduce((sum,employee)=>sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0);
-    rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}${googleCell}<td class="all-total">${dayTotal?duration(dayTotal):"—"}</td></tr>`;
+    rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}${googleCell}</tr>`;
     const nextDate=dates[index+1];const nextMonday=nextDate?addDays(nextDate,-((parseDate(nextDate).getUTCDay()+6)%7)):"";
     if(!nextDate||nextMonday!==monday){
       const totals=state.employees.map(employee=>`<td>${duration(weekEmployeeTotal(employee.id,monday))}</td>`).join("");
-      const teamTotal=state.employees.reduce((sum,employee)=>sum+weekEmployeeTotal(employee.id,monday),0);
-      rows+=`<tr class="weekly-total"><th>Total semaine ${isoWeek(monday)}</th>${totals}${showGoogle?'<td class="google-column">—</td>':""}<td>${duration(teamTotal)}</td></tr>`;
+      rows+=`<tr class="weekly-total"><th>Total semaine ${isoWeek(monday)}</th>${totals}${showGoogle?'<td class="google-column">—</td>':""}</tr>`;
     }
   });
-  const employeeTotals=state.employees.map(employee=>`<td>${duration(monthTotal(employee.id))}</td>`).join("");
   $("staffMonthGrid").innerHTML=`<article class="month-card"><div class="month-scroll">
     <table class="month-table" style="min-width:${Math.max(760,190+state.employees.length*180+(showGoogle?210:0))}px">
-      <thead><tr><th>Date</th>${state.employees.map(employee=>`<th style="--employee-color:${employee.color}">${esc(employee.name)}</th>`).join("")}${showGoogle?'<th class="google-column">📅 Mon agenda</th>':""}<th>Total</th></tr></thead>
-      <tbody>${rows}</tbody><tfoot><tr><th>Total mois</th>${employeeTotals}${showGoogle?'<td class="google-column">Exclu du PDF</td>':""}<td>${duration(state.employees.reduce((sum,employee)=>sum+monthTotal(employee.id),0))}</td></tr></tfoot>
+      <thead><tr><th>Date</th>${state.employees.map(employee=>`<th style="--employee-color:${employee.color}">${esc(employee.name)}</th>`).join("")}${showGoogle?'<th class="google-column">📅 Mon agenda</th>':""}</tr></thead>
+      <tbody>${rows}</tbody>
     </table></div></article>`;
   document.querySelectorAll(".month-cell").forEach(cell=>cell.onclick=event=>{if(!event.target.closest(".cell-details"))beginInlineEdit(cell)});
   document.querySelectorAll(".cell-details").forEach(button=>button.onclick=event=>{event.stopPropagation();openShift(Number(button.dataset.detailsEmployee),button.dataset.detailsDate)});
-  renderOverview(map,today);renderEmployees();renderSummary();renderCopyControls();
+  renderOverview(map,today);renderEmployees();renderCopyControls();
 }
 function renderOverview(map,today){
   const googleMap=googleEventsByDate();
@@ -228,7 +219,7 @@ function renderOverview(map,today){
           ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
         </td>`;
       }).join("");
-      return`<tr><td class="employee-name" style="--employee-color:${employee.color}">${esc(employee.name)}</td>${cells}
+      return`<tr data-overview-employee="${employee.id}"><td class="employee-name" style="--employee-color:${employee.color}">${esc(employee.name)}</td>${cells}
         <td class="week-total">${duration(weekEmployeeTotal(employee.id,monday))}</td></tr>`;
     }).join("");
     const calendarRow=showGoogle?`<tr class="google-overview-row"><td class="employee-name google-overview-name">📅 Agendas Google</td>
@@ -326,7 +317,21 @@ function selectView(view){
 $("staffMonth").value=currentMonth();
 $("previousMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()-1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("nextMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()+1);$("staffMonth").value=iso(date).slice(0,7);load()};
-$("staffMonth").onchange=()=>load();$("refreshStaff").onclick=()=>load();$("exportStaffPdf").onclick=()=>window.print();
+$("staffMonth").onchange=()=>load();$("refreshStaff").onclick=()=>load();
+$("exportStaffPdf").onclick=()=>{
+  const employeeId=$("printEmployee").value;
+  const employee=state.employees.find(item=>String(item.id)===employeeId);
+  $("printTitle").textContent=`${monthLabel(state.month)} · ${employee?.name||"Toute l’équipe"}`;
+  document.querySelectorAll("[data-overview-employee]").forEach(row=>
+    row.classList.toggle("print-excluded",Boolean(employeeId)&&row.dataset.overviewEmployee!==employeeId));
+  document.body.dataset.printEmployee=employeeId||"all";
+  window.print();
+};
+window.addEventListener("afterprint",()=>{
+  document.querySelectorAll(".print-excluded").forEach(row=>row.classList.remove("print-excluded"));
+  $("printTitle").textContent="";
+  delete document.body.dataset.printEmployee;
+});
 document.querySelectorAll("[data-section]").forEach(button=>button.onclick=()=>selectSection(button.dataset.section));
 document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>selectView(button.dataset.view));
 $("googleToggle").onchange=()=>{state.google.visible=$("googleToggle").checked;renderMonth();renderGooglePanel()};

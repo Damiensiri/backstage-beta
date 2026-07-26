@@ -14,6 +14,7 @@
       <span class="beta-pill">BÊTA · D1</span>
       <p class="eyebrow">Organisation de l’équipe</p>
       <h1>Planning mensuel des salariés</h1>
+      <p id="printTitle" class="print-title"></p>
       <p>Cliquez dans une case, écrivez par exemple 0700.1200/1300.1700, puis Entrée pour passer au jour suivant. Le copier-coller fonctionne comme dans Excel.</p>
     </header>
 
@@ -30,7 +31,10 @@
       <label>Mois <input id="staffMonth" type="month"></label>
       <button id="nextMonth" type="button" aria-label="Mois suivant">›</button>
       <button id="refreshStaff" class="secondary" type="button">Actualiser</button>
-      <button id="exportStaffPdf" class="export" type="button">Exporter / partager en PDF</button>
+      <label class="print-employee">Imprimer pour
+        <select id="printEmployee"><option value="">Tous les salariés</option></select>
+      </label>
+      <button id="exportStaffPdf" class="export" type="button">Imprimer / partager en PDF</button>
     </section>
 
     <section class="staff-panel copy-panel">
@@ -43,14 +47,6 @@
       <span class="copy-arrow">→</span>
       <label>Semaine de destination<select id="copyTargetWeek"></select></label>
       <button id="copyWeek" type="button">Copier les heures</button>
-    </section>
-
-    <section class="staff-panel summary-panel compact-summary">
-      <div class="compact-summary-title">
-        <strong id="monthTitle">Mois</strong>
-        <span id="monthRange" class="month-range"></span>
-      </div>
-      <div id="monthSummary" class="month-summary"></div>
     </section>
 
     <nav class="view-tabs" aria-label="Vues du planning">
@@ -132,7 +128,7 @@
     </form>
   </dialog>
 
-  <script src="assets/js/staff.js?v=20260726-10"></script>
+  <script src="assets/js/staff.js?v=20260726-11"></script>
   <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
 </body>
 </html>

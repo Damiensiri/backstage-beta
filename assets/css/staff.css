@@ -14,6 +14,7 @@ label{display:grid;gap:6px;color:#cbd5e1;font-size:.82rem;font-weight:750}
 .staff-header{padding-right:62px}
 .staff-header h1{max-width:900px;margin:0;font-size:clamp(2rem,6vw,4.6rem);line-height:1}
 .staff-header>p:last-child{max-width:760px;margin:14px 0 0;color:#b8c4d2;line-height:1.5}
+.print-title{display:none}
 .staff-status{min-height:24px;margin:14px 2px;color:#a9b5c4}
 .staff-status.success{color:#75e59b}.staff-status.error{color:#ff9595}
 .staff-tabs,.view-tabs{display:flex;gap:8px;margin:0 0 16px;padding:5px;border:1px solid #ffffff18;border-radius:16px;background:#10161f}
@@ -96,20 +97,18 @@ dialog::backdrop{background:#02060bc9;backdrop-filter:blur(5px)}
 @media print{
   @page{size:A4 portrait;margin:5mm}
   body{background:#fff;color:#000}
-  .backstage-menu-button,.backstage-menu,.backstage-menu-overlay,.staff-tabs,.view-tabs,.staff-toolbar,.employee-panel,.copy-panel,.google-panel,.google-column,.google-overview-row,.staff-status,.staff-help,.beta-pill{display:none!important}
+  .backstage-menu-button,.backstage-menu,.backstage-menu-overlay,.staff-tabs,.view-tabs,.staff-toolbar,.employee-panel,.copy-panel,.google-panel,.google-column,.google-overview-row,.staff-status,.staff-help,.beta-pill,#staffMonthGrid,.print-excluded{display:none!important}
+  #staffOverviewGrid{display:grid!important;gap:1.5mm}
   .staff-shell{width:100%;padding:0}
-  .staff-header{padding:0;margin:0 0 2mm}.staff-header .eyebrow,.staff-header>p:last-child{display:none}.staff-header h1{font-size:14pt}
-  .summary-panel{margin:0 0 2mm;padding:2mm;border:1px solid #777;background:#fff;box-shadow:none;color:#000}
-  .compact-summary{display:flex;padding:1.5mm}.panel-heading h2{font-size:11pt}.month-summary{gap:1mm;margin:0}
-  .summary-card{padding:1mm 1.5mm;border-color:#999;border-radius:0;background:#fff;color:#000}.summary-card strong{font-size:8pt}.summary-card span,.month-range{color:#333;font-size:5.5pt}
-  .month-card{overflow:visible;border:1px solid #555;border-radius:0;background:#fff;box-shadow:none}
-  .month-scroll{overflow:visible;max-height:none}.month-table{min-width:0!important;width:100%;font-size:5.3pt;table-layout:fixed}
-  .month-table th,.month-table td{border-color:#888}.month-table thead th{position:static;height:auto;padding:1mm .5mm;border-top-width:1px;background:#e6edf4!important;color:#000;font-size:5.5pt}
-  .month-table thead th:first-child{position:static;width:17mm}.month-table thead th:last-child{width:11mm}
-  .week-divider th{padding:.45mm 1mm;background:#dce7f1!important;color:#000;font-size:5pt}
-  .date-cell{position:static;width:17mm;padding:.55mm 1mm;background:#f1f4f7!important;color:#000;font-size:5pt}
-  .month-cell{height:auto;min-height:0;padding:.45mm .7mm;background:#fff!important;color:#000!important}
-  .day-main{color:#000!important;font-size:5.2pt;line-height:1.12}.day-total{display:inline;margin:0 0 0 1mm;color:#08732c!important;font-size:4.8pt}
-  .cell-details{display:none!important}.day-note{display:none}.rest-label{color:#666!important}.all-total{padding:.4mm;background:#f1f4f7!important;color:#000;font-size:4.8pt}
-  .month-table tfoot th,.month-table tfoot td{position:static;padding:.7mm;background:#dce7f1!important;color:#000;font-size:5.2pt}
+  .staff-header{padding:0;margin:0 0 1.5mm}.staff-header .eyebrow,.staff-header>p:last-child{display:none}.staff-header h1{font-size:12pt}.print-title{display:block;margin:.5mm 0 0;color:#222;font-size:7pt;text-transform:capitalize}
+  .week-card{overflow:visible;border:1px solid #555;border-radius:0;background:#fff;box-shadow:none;break-inside:avoid}
+  .week-heading{padding:1mm 1.5mm;background:#dce7f1!important;color:#000}.week-heading h2{color:#000;font-size:7pt}.week-heading span{color:#222;font-size:6pt}
+  .week-scroll{overflow:visible}.week-table{min-width:0;width:100%;table-layout:fixed;border-collapse:collapse}
+  .week-table th,.week-table td{border-color:#888}.week-table th{padding:.8mm .4mm;background:#e6edf4!important;color:#000;font-size:5.5pt}
+  .week-table th:first-child{width:22mm;padding-left:1mm}.week-table th:last-child{width:13mm}
+  .week-table td.employee-name{padding:1mm;border-left-width:2mm;color:#000;font-size:6pt}
+  .day-cell{height:10mm;padding:.8mm .5mm;background:#fff!important;color:#000!important;cursor:default}
+  .day-main{color:#000!important;font-size:5.3pt;line-height:1.12}.overview-cell{padding-bottom:3.5mm}
+  .overview-cell .day-total{right:.5mm;bottom:.5mm;left:.5mm;color:#08732c!important;font-size:5pt}
+  .day-note{font-size:4.5pt;color:#754d00!important}.rest-label{color:#666!important}.week-total{padding:.5mm;background:#f1f4f7!important;color:#000;font-size:5.5pt}
 }
