@@ -143,6 +143,7 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/function renderOverview/);
   assert.match(staffScript,/overview-cell/);
   assert.match(staffScript,/google-overview-row/);
+  assert.match(staffScript,/cell-details overview-details/);
   assert.match(staffScript,/\/api\/admin\/staff-planning\/copy-month/);
   assert.match(staffScript,/📅 Agendas Google/);
   assert.doesNotMatch(staffScript,/Total équipe/);

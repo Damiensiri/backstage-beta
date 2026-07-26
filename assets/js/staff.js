@@ -220,6 +220,7 @@ function renderOverview(map,today){
         const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
         return`<td class="day-cell overview-cell status-${shift?.status||"empty"}${date===today?" today":""}${date.startsWith(state.month)?"":" outside-month"}"
           data-employee="${employee.id}" data-date="${date}">
+          <button class="cell-details overview-details" type="button" data-details-employee="${employee.id}" data-details-date="${date}" aria-label="Ouvrir les détails">•••</button>
           <span class="day-main">${workText(shift)}</span>${total?`<span class="day-total">${duration(total)}</span>`:""}
           ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
         </td>`;
@@ -237,7 +238,12 @@ function renderOverview(map,today){
       <tbody>${calendarRow}${rows}</tbody>
       </table></div></article>`;
   }).join("");
-  document.querySelectorAll(".overview-cell").forEach(cell=>cell.onclick=()=>beginInlineEdit(cell));
+  document.querySelectorAll(".overview-cell").forEach(cell=>cell.onclick=event=>{
+    if(!event.target.closest(".cell-details"))beginInlineEdit(cell);
+  });
+  document.querySelectorAll(".overview-details").forEach(button=>button.onclick=event=>{
+    event.stopPropagation();openShift(Number(button.dataset.detailsEmployee),button.dataset.detailsDate);
+  });
 }
 function beginInlineEdit(cell){
   if(cell.querySelector(".inline-entry"))return;
