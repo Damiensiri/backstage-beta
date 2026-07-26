@@ -121,9 +121,8 @@ function googleTime(event){
 function renderGooglePanel(){
   const google=state.google;
   $("googleConfiguredMessage").hidden=google.configured;
-  $("googleDisconnected").hidden=!google.configured||google.connected;
   $("googleConnected").hidden=!google.connected;
-  $("googleCalendarName").textContent=google.calendarName||"Agenda Google";
+  $("googleCalendarName").textContent=google.calendarName||"Calendrier Damien Siri";
   $("googleEventCount").textContent=`${google.events?.length||0} événement(s) ce mois`;
   $("googleToggle").checked=google.visible;
 }
@@ -182,9 +181,9 @@ function renderMonth(){
       </td>`;
     }).join("");
     const googleEvents=googleMap.get(date)||[];
-    const googleCell=showGoogle?`<td class="google-column google-events">${googleEvents.map(event=>`<a href="${esc(event.htmlLink)}" target="_blank" rel="noopener">
+    const googleCell=showGoogle?`<td class="google-column google-events">${googleEvents.map(event=>`<div class="google-event">
       <strong>${esc(googleTime(event))}</strong><span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}
-    </a>`).join("")||'<span class="google-empty">—</span>'}</td>`:"";
+    </div>`).join("")||'<span class="google-empty">—</span>'}</td>`:"";
     const dayTotal=state.employees.reduce((sum,employee)=>sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0);
     rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}${googleCell}<td class="all-total">${dayTotal?duration(dayTotal):"—"}</td></tr>`;
   });
@@ -267,15 +266,6 @@ $("staffMonth").value=currentMonth();
 $("previousMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()-1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("nextMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()+1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("staffMonth").onchange=()=>load();$("refreshStaff").onclick=()=>load();$("exportStaffPdf").onclick=()=>window.print();
-$("connectGoogleCalendar").onclick=async()=>{
-  try{const result=await api("/api/admin/google-calendar/connect",{method:"POST"});location.assign(result.authorizationUrl)}
-  catch(error){setStatus(error.message,"error")}
-};
-$("disconnectGoogleCalendar").onclick=async()=>{
-  if(!confirm("Déconnecter votre agenda Google de Backstage ?"))return;
-  try{await api("/api/admin/google-calendar/connection",{method:"DELETE"});await loadGoogleCalendar();renderMonth();setStatus("Agenda Google déconnecté.","success")}
-  catch(error){setStatus(error.message,"error")}
-};
 $("googleToggle").onchange=()=>{state.google.visible=$("googleToggle").checked;renderMonth();renderGooglePanel()};
 $("copyWeek").onclick=async()=>{
   const sourceStart=$("copySourceWeek").value,targetStart=$("copyTargetWeek").value;
@@ -293,10 +283,5 @@ $("shiftForm").onsubmit=async event=>{event.preventDefault();const payload={empl
   morningStart:$("morningStart").value,morningEnd:$("morningEnd").value,afternoonStart:$("afternoonStart").value,afternoonEnd:$("afternoonEnd").value,note:$("shiftNote").value};
   try{await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});$("shiftDialog").close();await load(true);setStatus("Journée enregistrée.","success")}catch(error){setStatus(error.message,"error")}};
 $("deleteShift").onclick=async()=>{if(!confirm("Effacer cette journée ? Elle sera affichée comme Repos."))return;try{await api(`/api/admin/staff-planning/shifts/${$("shiftEmployeeId").value}/${$("shiftIsoDate").value}`,{method:"DELETE"});$("shiftDialog").close();await load(true);setStatus("Journée remise en repos.","success")}catch(error){setStatus(error.message,"error")}};
-const googleResult=new URLSearchParams(location.search).get("google");
-load().then(()=>{
-  if(googleResult==="connected")setStatus("Agenda Google connecté avec succès.","success");
-  if(googleResult==="error")setStatus("La connexion Google Calendar a échoué ou a été refusée.","error");
-  if(googleResult)history.replaceState(null,"",location.pathname);
-});
+load();
 })();

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#090b0f">
   <title>Planning salariés — Backstage bêta</title>
   <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260726-1">
-  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-5">
+  <link rel="stylesheet" href="assets/css/staff.css?v=20260726-6">
 </head>
 <body>
   <main class="staff-shell">
@@ -56,17 +56,13 @@
     <section class="staff-panel google-panel">
       <div>
         <p class="eyebrow">Votre organisation</p>
-        <h2>Agenda Google</h2>
-        <p class="staff-help">Lecture seule, visible uniquement dans Backstage et toujours exclu du PDF des salariés.</p>
+        <h2>Mon calendrier</h2>
+        <p class="staff-help">Le calendrier public iCal est lu automatiquement en lecture seule. Il reste visible uniquement dans Backstage et est toujours exclu du PDF des salariés.</p>
       </div>
-      <p id="googleConfiguredMessage" class="google-message">Le connecteur est prêt. Il reste à installer les identifiants Google dans Cloudflare bêta.</p>
-      <div id="googleDisconnected" class="google-actions" hidden>
-        <button id="connectGoogleCalendar" type="button">Connecter mon calendrier Google</button>
-      </div>
+      <p id="googleConfiguredMessage" class="google-message">Le calendrier iCal public n’est pas configuré dans Cloudflare bêta.</p>
       <div id="googleConnected" class="google-connected" hidden>
-        <div><strong id="googleCalendarName">Agenda Google</strong><span id="googleEventCount"></span></div>
+        <div><strong id="googleCalendarName">Calendrier Damien Siri</strong><span id="googleEventCount"></span></div>
         <label class="google-switch"><input id="googleToggle" type="checkbox" checked> Afficher dans le planning</label>
-        <button id="disconnectGoogleCalendar" class="danger" type="button">Déconnecter</button>
       </div>
     </section>
 
@@ -114,7 +110,7 @@
     </form>
   </dialog>
 
-  <script src="assets/js/staff.js?v=20260726-5"></script>
+  <script src="assets/js/staff.js?v=20260726-6"></script>
   <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
 </body>
 </html>
