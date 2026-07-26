@@ -165,6 +165,11 @@ function renderCopyControls(){
   const options=weeks().map(days=>`<option value="${days[0]}">Semaine ${isoWeek(days[0])} · ${shortDate(days[0])}</option>`).join("");
   $("copySourceWeek").innerHTML=options;$("copyTargetWeek").innerHTML=options;
   if(weeks().length>1)$("copyTargetWeek").selectedIndex=1;
+  if(!$("copySourceMonth").value)$("copySourceMonth").value=state.month;
+  if(!$("copyTargetMonth").value){
+    const next=parseDate(state.month+"-01");next.setUTCMonth(next.getUTCMonth()+1);
+    $("copyTargetMonth").value=iso(next).slice(0,7);
+  }
 }
 function renderMonth(){
   const map=shiftMap();const today=new Date().toISOString().slice(0,10);const dates=monthDates();
@@ -342,6 +347,17 @@ $("copyWeek").onclick=async()=>{
   if(!confirm(`Remplacer les horaires de ${targetLabel} par ceux de la semaine source ?`))return;
   try{await api("/api/admin/staff-planning/copy-week",{method:"POST",body:JSON.stringify({sourceStart,targetStart})});await load(true);setStatus("Semaine copiée avec succès.","success")}
   catch(error){setStatus(error.message,"error")}
+};
+$("copyMonth").onclick=async()=>{
+  const sourceMonth=$("copySourceMonth").value,targetMonth=$("copyTargetMonth").value;
+  if(!sourceMonth||!targetMonth){setStatus("Choisissez les deux mois.","error");return}
+  if(sourceMonth===targetMonth){setStatus("Choisissez deux mois différents.","error");return}
+  const label=monthLabel(targetMonth);
+  if(!confirm(`Remplacer tous les horaires de ${label} par ceux du mois source ?`))return;
+  try{
+    await api("/api/admin/staff-planning/copy-month",{method:"POST",body:JSON.stringify({sourceMonth,targetMonth})});
+    $("staffMonth").value=targetMonth;await load(true);setStatus("Mois copié avec succès.","success");
+  }catch(error){setStatus(error.message,"error")}
 };
 $("toggleEmployeeForm").onclick=()=>{$("employeeForm").hidden=!$("employeeForm").hidden;if(!$("employeeForm").hidden)$("employeeName").focus()};
 $("employeeForm").onsubmit=async event=>{event.preventDefault();try{await api("/api/admin/staff-planning/employees",{method:"POST",body:JSON.stringify({name:$("employeeName").value,color:$("employeeColor").value})});event.target.reset();$("employeeColor").value="#F27D2C";await load(true);setStatus("Salarié ajouté.","success")}catch(error){setStatus(error.message,"error")}};

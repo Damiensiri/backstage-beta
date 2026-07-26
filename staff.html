@@ -49,6 +49,18 @@
       <button id="copyWeek" type="button">Copier les heures</button>
     </section>
 
+    <section class="staff-panel copy-panel month-copy-panel">
+      <div>
+        <p class="eyebrow">Copier-coller mensuel</p>
+        <h2>Reprendre les horaires d’un mois</h2>
+        <p class="staff-help">Les journées du mois de destination seront remplacées pour toute l’équipe.</p>
+      </div>
+      <label>Mois source<input id="copySourceMonth" type="month"></label>
+      <span class="copy-arrow">→</span>
+      <label>Mois de destination<input id="copyTargetMonth" type="month"></label>
+      <button id="copyMonth" type="button">Copier le mois</button>
+    </section>
+
     <nav class="view-tabs" aria-label="Vues du planning">
       <button class="view-tab active" type="button" data-view="entry">Saisie quotidienne</button>
       <button class="view-tab" type="button" data-view="overview">Vue mensuelle</button>
@@ -128,7 +140,7 @@
     </form>
   </dialog>
 
-  <script src="assets/js/staff.js?v=20260726-11"></script>
+  <script src="assets/js/staff.js?v=20260726-12"></script>
   <script src="assets/js/backstage-shell.js?v=20260726-1"></script>
 </body>
 </html>
