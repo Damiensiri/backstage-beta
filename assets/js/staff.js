@@ -68,12 +68,17 @@ function parseDirectEntry(value,employeeId,date){
   if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
   if(normalized==="at"||normalized.includes("arret")||normalized.includes("maladie"))return{employeeId,date,status:"sick"};
   if(normalized.includes("absence"))return{employeeId,date,status:"absence"};
-  const matches=[...text.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
-  if(!matches.length||matches.length>2)return{error:"Écrivez par exemple 7h30-12h / 14h-17h45, Congés ou Arrêt maladie"};
-  const ranges=matches.map(match=>{
-    const start=`${String(Number(match[1])).padStart(2,"0")}:${String(Number(match[2]||0)).padStart(2,"0")}`;
-    const end=`${String(Number(match[3])).padStart(2,"0")}:${String(Number(match[4]||0)).padStart(2,"0")}`;
-    if(Number(match[1])>23||Number(match[3])>23||Number(match[2]||0)>59||Number(match[4]||0)>59||minutes(start,end)<=0)return null;
+  const compact=[...text.matchAll(/\b(\d{3,4})\s+(\d{3,4})\b/g)];
+  const written=[...text.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
+  const rawRanges=compact.length?compact.map(match=>{
+    const from=match[1].padStart(4,"0"),to=match[2].padStart(4,"0");
+    return[from.slice(0,2),from.slice(2),to.slice(0,2),to.slice(2)];
+  }):written.map(match=>[match[1],match[2]||"0",match[3],match[4]||"0"]);
+  if(!rawRanges.length||rawRanges.length>2)return{error:"Écrivez 0730 1200 / 1400 1700, Congés ou Arrêt maladie"};
+  const ranges=rawRanges.map(parts=>{
+    const start=`${String(Number(parts[0])).padStart(2,"0")}:${String(Number(parts[1])).padStart(2,"0")}`;
+    const end=`${String(Number(parts[2])).padStart(2,"0")}:${String(Number(parts[3])).padStart(2,"0")}`;
+    if(Number(parts[0])>23||Number(parts[2])>23||Number(parts[1])>59||Number(parts[3])>59||minutes(start,end)<=0)return null;
     return{start,end};
   });
   if(ranges.includes(null))return{error:"Les horaires saisis ne sont pas cohérents"};
@@ -145,9 +150,10 @@ function beginInlineEdit(cell){
   const employeeId=Number(cell.dataset.employee),date=cell.dataset.date;
   const shift=state.shifts.find(item=>item.employeeId===employeeId&&item.date===date);
   const input=document.createElement("input");input.className="inline-entry";input.type="text";
-  input.value=directText(shift);input.placeholder="7h30-12h / 14h-17h";
+  input.value=directText(shift);input.placeholder="0730 1200 / 1400 1700";
   cell.innerHTML="";cell.append(input);input.focus();input.select();
   let saving=false;
+  let moveAfterSave=0;
   const save=async()=>{
     if(saving)return;saving=true;
     const payload=parseDirectEntry(input.value,employeeId,date);
@@ -158,10 +164,15 @@ function beginInlineEdit(cell){
         if(shift)await api(`/api/admin/staff-planning/shifts/${employeeId}/${date}`,{method:"DELETE"});
       }else await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});
       await load(true);setStatus(payload.empty?"Journée en repos.":"Case enregistrée.","success");
+      if(moveAfterSave){
+        const nextDate=addDays(date,moveAfterSave);
+        const nextCell=document.querySelector(`.month-cell[data-employee="${employeeId}"][data-date="${nextDate}"]`);
+        if(nextCell)beginInlineEdit(nextCell);
+      }
     }catch(error){saving=false;setStatus(error.message,"error");renderMonth()}
   };
   input.onkeydown=event=>{
-    if(event.key==="Enter"){event.preventDefault();input.blur()}
+    if(event.key==="Enter"){event.preventDefault();moveAfterSave=event.shiftKey?-1:1;input.blur()}
     if(event.key==="Escape"){event.preventDefault();renderMonth()}
   };
   input.onblur=save;

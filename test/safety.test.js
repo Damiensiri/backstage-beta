@@ -127,7 +127,8 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/method:"DELETE"/);
   assert.match(staffScript,/rest-label">Repos/);
   assert.match(staffScript,/function parseDirectEntry/);
-  assert.match(staffScript,/7h30-12h \/ 14h-17h45/);
+  assert.match(staffScript,/0730 1200 \/ 1400 1700/);
+  assert.match(staffScript,/moveAfterSave/);
   assert.match(staffScript,/className="inline-entry"/);
   assert.match(staffScript,/window\.print\(\)/);
   assert.match(staffStyles,/@page\{size:A4 portrait/);
