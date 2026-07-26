@@ -214,6 +214,8 @@ function renderMonth(){
   renderOverview(map,today);renderEmployees();renderSummary();renderCopyControls();
 }
 function renderOverview(map,today){
+  const googleMap=googleEventsByDate();
+  const showGoogle=state.google.connected&&state.google.visible;
   $("staffOverviewGrid").innerHTML=weeks().map(days=>{
     const monday=days[0];
     const head=days.map(date=>`<th class="${date.startsWith(state.month)?"":"outside-month"}">${rowDate(date)}</th>`).join("");
@@ -229,13 +231,14 @@ function renderOverview(map,today){
       return`<tr><td class="employee-name" style="--employee-color:${employee.color}">${esc(employee.name)}</td>${cells}
         <td class="week-total">${duration(weekEmployeeTotal(employee.id,monday))}</td></tr>`;
     }).join("");
-    const dayTotals=days.map(date=>`<td class="week-total">${duration(state.employees.reduce((sum,employee)=>
-      sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0))}</td>`).join("");
-    const teamTotal=state.employees.reduce((sum,employee)=>sum+weekEmployeeTotal(employee.id,monday),0);
+    const calendarRow=showGoogle?`<tr class="google-overview-row"><td class="employee-name google-overview-name">📅 Mon agenda</td>
+      ${days.map(date=>`<td class="google-events${date.startsWith(state.month)?"":" outside-month"}">${(googleMap.get(date)||[]).map(event=>`<div class="google-event">
+        <strong>${esc(googleTime(event))}</strong><span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}
+      </div>`).join("")||'<span class="google-empty">—</span>'}</td>`).join("")}<td class="week-total">—</td></tr>`:"";
     return`<article class="week-card"><header class="week-heading"><h2>Semaine ${isoWeek(monday)}</h2>
       <span>${shortDate(monday)} au ${shortDate(days[6])}</span></header><div class="week-scroll">
       <table class="week-table"><thead><tr><th>Salarié</th>${head}<th>Total</th></tr></thead>
-      <tbody>${rows}</tbody><tfoot><tr><td>Total équipe</td>${dayTotals}<td class="week-total">${duration(teamTotal)}</td></tr></tfoot>
+      <tbody>${rows}${calendarRow}</tbody>
       </table></div></article>`;
   }).join("");
   document.querySelectorAll(".overview-cell").forEach(cell=>cell.onclick=()=>beginInlineEdit(cell));
