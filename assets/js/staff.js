@@ -4,7 +4,7 @@ const API=(localStorage.getItem("notifications_beta_api_url")||"https://ecurie-n
 const TOKEN=localStorage.getItem("notifications_beta_admin_token")||"";
 const TYPES={work:"Travail",rest:"Repos",leave:"Congés",sick:"Arrêt maladie",absence:"Absence"};
 const $=id=>document.getElementById(id);
-let state={employees:[],shifts:[],range:null,month:""};
+let state={employees:[],shifts:[],range:null,month:"",google:{configured:false,connected:false,events:[],visible:true}};
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]))}
 function setStatus(message,type=""){$("staffStatus").textContent=message;$("staffStatus").className="staff-status "+type}
@@ -94,6 +94,54 @@ function parseDirectEntry(value,employeeId,date){
 function monthTotal(employeeId){
   return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date.startsWith(state.month)).reduce((sum,shift)=>sum+shiftMinutes(shift),0);
 }
+function googleEventsByDate(){
+  const result=new Map();
+  for(const event of state.google.events||[]){
+    let cursor=String(event.start||event.date||"").slice(0,10);
+    let last=String(event.end||cursor).slice(0,10);
+    if(event.allDay&&last>cursor)last=addDays(last,-1);
+    let guard=0;
+    while(cursor&&cursor<=last&&guard++<40){
+      if(cursor.startsWith(state.month)){
+        if(!result.has(cursor))result.set(cursor,[]);
+        result.get(cursor).push(event);
+      }
+      cursor=addDays(cursor,1);
+    }
+  }
+  return result;
+}
+function googleTime(event){
+  if(event.allDay)return"Journée";
+  const options={hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris",hourCycle:"h23"};
+  const start=new Intl.DateTimeFormat("fr-FR",options).format(new Date(event.start));
+  const end=new Intl.DateTimeFormat("fr-FR",options).format(new Date(event.end));
+  return`${start}–${end}`;
+}
+function renderGooglePanel(){
+  const google=state.google;
+  $("googleConfiguredMessage").hidden=google.configured;
+  $("googleDisconnected").hidden=!google.configured||google.connected;
+  $("googleConnected").hidden=!google.connected;
+  $("googleCalendarName").textContent=google.calendarName||"Agenda Google";
+  $("googleEventCount").textContent=`${google.events?.length||0} événement(s) ce mois`;
+  $("googleToggle").checked=google.visible;
+}
+async function loadGoogleCalendar(){
+  const visible=state.google.visible;
+  try{
+    const status=await api("/api/admin/google-calendar/status");
+    state.google={...status,events:[],visible};
+    if(status.connected){
+      const events=await api("/api/admin/google-calendar/events?month="+encodeURIComponent(state.month));
+      state.google={...state.google,...events,visible};
+    }
+  }catch(error){
+    state.google={...state.google,events:[],visible,error:error.message};
+    setStatus(error.message,"error");
+  }
+  renderGooglePanel();
+}
 function renderEmployees(){
   $("employeeList").innerHTML=state.employees.map(employee=>`<div class="employee-chip" style="--employee-color:${employee.color}">
     <span class="employee-dot"></span>
@@ -117,12 +165,13 @@ function renderCopyControls(){
 }
 function renderMonth(){
   const map=shiftMap();const today=new Date().toISOString().slice(0,10);const dates=monthDates();
+  const googleMap=googleEventsByDate();const showGoogle=state.google.connected&&state.google.visible;
   let rows="";let currentWeek="";
   dates.forEach(date=>{
     const monday=addDays(date,-((parseDate(date).getUTCDay()+6)%7));
     if(monday!==currentWeek){
       currentWeek=monday;
-      rows+=`<tr class="week-divider"><th colspan="${state.employees.length+2}">Semaine ${isoWeek(date)} · ${shortDate(monday)} au ${shortDate(addDays(monday,6))}</th></tr>`;
+      rows+=`<tr class="week-divider"><th colspan="${state.employees.length+2+(showGoogle?1:0)}">Semaine ${isoWeek(date)} · ${shortDate(monday)} au ${shortDate(addDays(monday,6))}</th></tr>`;
     }
     const cells=state.employees.map(employee=>{
       const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
@@ -132,14 +181,18 @@ function renderMonth(){
         ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
       </td>`;
     }).join("");
+    const googleEvents=googleMap.get(date)||[];
+    const googleCell=showGoogle?`<td class="google-column google-events">${googleEvents.map(event=>`<a href="${esc(event.htmlLink)}" target="_blank" rel="noopener">
+      <strong>${esc(googleTime(event))}</strong><span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}
+    </a>`).join("")||'<span class="google-empty">—</span>'}</td>`:"";
     const dayTotal=state.employees.reduce((sum,employee)=>sum+shiftMinutes(map.get(shiftKey(employee.id,date))),0);
-    rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}<td class="all-total">${dayTotal?duration(dayTotal):"—"}</td></tr>`;
+    rows+=`<tr><th class="date-cell">${rowDate(date)}</th>${cells}${googleCell}<td class="all-total">${dayTotal?duration(dayTotal):"—"}</td></tr>`;
   });
   const employeeTotals=state.employees.map(employee=>`<td>${duration(monthTotal(employee.id))}</td>`).join("");
   $("staffMonthGrid").innerHTML=`<article class="month-card"><div class="month-scroll">
-    <table class="month-table" style="min-width:${Math.max(760,190+state.employees.length*180)}px">
-      <thead><tr><th>Date</th>${state.employees.map(employee=>`<th style="--employee-color:${employee.color}">${esc(employee.name)}</th>`).join("")}<th>Total</th></tr></thead>
-      <tbody>${rows}</tbody><tfoot><tr><th>Total mois</th>${employeeTotals}<td>${duration(state.employees.reduce((sum,employee)=>sum+monthTotal(employee.id),0))}</td></tr></tfoot>
+    <table class="month-table" style="min-width:${Math.max(760,190+state.employees.length*180+(showGoogle?210:0))}px">
+      <thead><tr><th>Date</th>${state.employees.map(employee=>`<th style="--employee-color:${employee.color}">${esc(employee.name)}</th>`).join("")}${showGoogle?'<th class="google-column">📅 Mon agenda</th>':""}<th>Total</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr><th>Total mois</th>${employeeTotals}${showGoogle?'<td class="google-column">Exclu du PDF</td>':""}<td>${duration(state.employees.reduce((sum,employee)=>sum+monthTotal(employee.id),0))}</td></tr></tfoot>
     </table></div></article>`;
   document.querySelectorAll(".month-cell").forEach(cell=>cell.onclick=event=>{if(!event.target.closest(".cell-details"))beginInlineEdit(cell)});
   document.querySelectorAll(".cell-details").forEach(button=>button.onclick=event=>{event.stopPropagation();openShift(Number(button.dataset.detailsEmployee),button.dataset.detailsDate)});
@@ -179,7 +232,8 @@ function beginInlineEdit(cell){
 }
 async function load(silent=false){
   if(!silent)setStatus("Chargement…");
-  try{state=await api("/api/admin/staff-planning?month="+encodeURIComponent($("staffMonth").value));renderMonth();if(!silent)setStatus("Planning actualisé.","success")}
+  try{const planning=await api("/api/admin/staff-planning?month="+encodeURIComponent($("staffMonth").value));
+    state={...state,...planning};await loadGoogleCalendar();renderMonth();if(!silent&&!state.google.error)setStatus("Planning actualisé.","success")}
   catch(error){setStatus(error.message,"error")}
 }
 function updateTotal(){
@@ -213,6 +267,16 @@ $("staffMonth").value=currentMonth();
 $("previousMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()-1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("nextMonth").onclick=()=>{const date=parseDate($("staffMonth").value+"-01");date.setUTCMonth(date.getUTCMonth()+1);$("staffMonth").value=iso(date).slice(0,7);load()};
 $("staffMonth").onchange=()=>load();$("refreshStaff").onclick=()=>load();$("exportStaffPdf").onclick=()=>window.print();
+$("connectGoogleCalendar").onclick=async()=>{
+  try{const result=await api("/api/admin/google-calendar/connect",{method:"POST"});location.assign(result.authorizationUrl)}
+  catch(error){setStatus(error.message,"error")}
+};
+$("disconnectGoogleCalendar").onclick=async()=>{
+  if(!confirm("Déconnecter votre agenda Google de Backstage ?"))return;
+  try{await api("/api/admin/google-calendar/connection",{method:"DELETE"});await loadGoogleCalendar();renderMonth();setStatus("Agenda Google déconnecté.","success")}
+  catch(error){setStatus(error.message,"error")}
+};
+$("googleToggle").onchange=()=>{state.google.visible=$("googleToggle").checked;renderMonth();renderGooglePanel()};
 $("copyWeek").onclick=async()=>{
   const sourceStart=$("copySourceWeek").value,targetStart=$("copyTargetWeek").value;
   if(sourceStart===targetStart){setStatus("Choisissez deux semaines différentes.","error");return}
@@ -229,5 +293,10 @@ $("shiftForm").onsubmit=async event=>{event.preventDefault();const payload={empl
   morningStart:$("morningStart").value,morningEnd:$("morningEnd").value,afternoonStart:$("afternoonStart").value,afternoonEnd:$("afternoonEnd").value,note:$("shiftNote").value};
   try{await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});$("shiftDialog").close();await load(true);setStatus("Journée enregistrée.","success")}catch(error){setStatus(error.message,"error")}};
 $("deleteShift").onclick=async()=>{if(!confirm("Effacer cette journée ? Elle sera affichée comme Repos."))return;try{await api(`/api/admin/staff-planning/shifts/${$("shiftEmployeeId").value}/${$("shiftIsoDate").value}`,{method:"DELETE"});$("shiftDialog").close();await load(true);setStatus("Journée remise en repos.","success")}catch(error){setStatus(error.message,"error")}};
-load();
+const googleResult=new URLSearchParams(location.search).get("google");
+load().then(()=>{
+  if(googleResult==="connected")setStatus("Agenda Google connecté avec succès.","success");
+  if(googleResult==="error")setStatus("La connexion Google Calendar a échoué ou a été refusée.","error");
+  if(googleResult)history.replaceState(null,"",location.pathname);
+});
 })();

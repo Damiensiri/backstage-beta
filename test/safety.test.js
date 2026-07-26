@@ -130,6 +130,11 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/0730 1200 \/ 1400 1700/);
   assert.match(staffScript,/moveAfterSave/);
   assert.match(staffScript,/className="inline-entry"/);
+  assert.match(staff,/id="connectGoogleCalendar"/);
+  assert.match(staff,/lecture seule/i);
+  assert.match(staffScript,/api\/admin\/google-calendar\/events/);
+  assert.match(staffStyles,/\.google-column/);
+  assert.match(staffStyles,/@media print[\s\S]*\.google-column/);
   assert.match(staffScript,/window\.print\(\)/);
   assert.match(staffStyles,/@page\{size:A4 portrait/);
   assert.doesNotMatch(staff+staffScript,/firebase|prod/i);
