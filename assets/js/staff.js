@@ -52,6 +52,40 @@ function workText(shift){
   if(shift.afternoonStart&&shift.afternoonEnd)lines.push(`${shift.afternoonStart}–${shift.afternoonEnd}`);
   return lines.join("<br>")||"Travail";
 }
+function directText(shift){
+  if(!shift)return"";
+  if(shift.status!=="work")return TYPES[shift.status]||shift.status;
+  const ranges=[];
+  if(shift.morningStart&&shift.morningEnd)ranges.push(`${shift.morningStart.replace(":","h")}-${shift.morningEnd.replace(":","h")}`);
+  if(shift.afternoonStart&&shift.afternoonEnd)ranges.push(`${shift.afternoonStart.replace(":","h")}-${shift.afternoonEnd.replace(":","h")}`);
+  return ranges.join(" / ");
+}
+function normalizeWord(value){return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
+function parseDirectEntry(value,employeeId,date){
+  const text=String(value||"").trim();const normalized=normalizeWord(text);
+  if(!text)return{empty:true};
+  if(["repos","repo"].includes(normalized))return{employeeId,date,status:"rest"};
+  if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
+  if(normalized==="at"||normalized.includes("arret")||normalized.includes("maladie"))return{employeeId,date,status:"sick"};
+  if(normalized.includes("absence"))return{employeeId,date,status:"absence"};
+  const matches=[...text.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
+  if(!matches.length||matches.length>2)return{error:"Écrivez par exemple 7h30-12h / 14h-17h45, Congés ou Arrêt maladie"};
+  const ranges=matches.map(match=>{
+    const start=`${String(Number(match[1])).padStart(2,"0")}:${String(Number(match[2]||0)).padStart(2,"0")}`;
+    const end=`${String(Number(match[3])).padStart(2,"0")}:${String(Number(match[4]||0)).padStart(2,"0")}`;
+    if(Number(match[1])>23||Number(match[3])>23||Number(match[2]||0)>59||Number(match[4]||0)>59||minutes(start,end)<=0)return null;
+    return{start,end};
+  });
+  if(ranges.includes(null))return{error:"Les horaires saisis ne sont pas cohérents"};
+  const payload={employeeId,date,status:"work",morningStart:"",morningEnd:"",afternoonStart:"",afternoonEnd:"",note:""};
+  if(ranges.length===1&&Number(ranges[0].start.slice(0,2))>=13){
+    payload.afternoonStart=ranges[0].start;payload.afternoonEnd=ranges[0].end;
+  }else{
+    payload.morningStart=ranges[0].start;payload.morningEnd=ranges[0].end;
+    if(ranges[1]){payload.afternoonStart=ranges[1].start;payload.afternoonEnd=ranges[1].end}
+  }
+  return payload;
+}
 function monthTotal(employeeId){
   return state.shifts.filter(shift=>shift.employeeId===employeeId&&shift.date.startsWith(state.month)).reduce((sum,shift)=>sum+shiftMinutes(shift),0);
 }
@@ -88,6 +122,7 @@ function renderMonth(){
     const cells=state.employees.map(employee=>{
       const shift=map.get(shiftKey(employee.id,date));const total=shiftMinutes(shift);
       return`<td class="month-cell status-${shift?.status||"empty"}${date===today?" today":""}" data-employee="${employee.id}" data-date="${date}">
+        <button class="cell-details" type="button" data-details-employee="${employee.id}" data-details-date="${date}" aria-label="Ouvrir les détails">•••</button>
         <span class="day-main">${workText(shift)}</span>${total?`<span class="day-total">${duration(total)}</span>`:""}
         ${shift?.note?`<span class="day-note">${esc(shift.note)}</span>`:""}
       </td>`;
@@ -101,8 +136,35 @@ function renderMonth(){
       <thead><tr><th>Date</th>${state.employees.map(employee=>`<th style="--employee-color:${employee.color}">${esc(employee.name)}</th>`).join("")}<th>Total</th></tr></thead>
       <tbody>${rows}</tbody><tfoot><tr><th>Total mois</th>${employeeTotals}<td>${duration(state.employees.reduce((sum,employee)=>sum+monthTotal(employee.id),0))}</td></tr></tfoot>
     </table></div></article>`;
-  document.querySelectorAll(".month-cell").forEach(cell=>cell.onclick=()=>openShift(Number(cell.dataset.employee),cell.dataset.date));
+  document.querySelectorAll(".month-cell").forEach(cell=>cell.onclick=event=>{if(!event.target.closest(".cell-details"))beginInlineEdit(cell)});
+  document.querySelectorAll(".cell-details").forEach(button=>button.onclick=event=>{event.stopPropagation();openShift(Number(button.dataset.detailsEmployee),button.dataset.detailsDate)});
   renderEmployees();renderSummary();renderCopyControls();
+}
+function beginInlineEdit(cell){
+  if(cell.querySelector(".inline-entry"))return;
+  const employeeId=Number(cell.dataset.employee),date=cell.dataset.date;
+  const shift=state.shifts.find(item=>item.employeeId===employeeId&&item.date===date);
+  const input=document.createElement("input");input.className="inline-entry";input.type="text";
+  input.value=directText(shift);input.placeholder="7h30-12h / 14h-17h";
+  cell.innerHTML="";cell.append(input);input.focus();input.select();
+  let saving=false;
+  const save=async()=>{
+    if(saving)return;saving=true;
+    const payload=parseDirectEntry(input.value,employeeId,date);
+    if(payload.error){saving=false;setStatus(payload.error,"error");input.focus();input.select();return}
+    if(!payload.empty)payload.note=shift?.note||"";
+    try{
+      if(payload.empty){
+        if(shift)await api(`/api/admin/staff-planning/shifts/${employeeId}/${date}`,{method:"DELETE"});
+      }else await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});
+      await load(true);setStatus(payload.empty?"Journée en repos.":"Case enregistrée.","success");
+    }catch(error){saving=false;setStatus(error.message,"error");renderMonth()}
+  };
+  input.onkeydown=event=>{
+    if(event.key==="Enter"){event.preventDefault();input.blur()}
+    if(event.key==="Escape"){event.preventDefault();renderMonth()}
+  };
+  input.onblur=save;
 }
 async function load(silent=false){
   if(!silent)setStatus("Chargement…");

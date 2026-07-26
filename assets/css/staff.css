@@ -61,6 +61,8 @@ label{display:grid;gap:6px;color:#cbd5e1;font-size:.82rem;font-weight:750}
 .month-cell{height:62px;padding:6px 8px;background:#111b27;vertical-align:top;cursor:pointer}
 .month-cell:hover{background:#172536}.month-cell.today{box-shadow:inset 0 0 0 2px #f5c760}
 .month-cell.status-leave{background:#34455d}.month-cell.status-sick{background:#58232a}.month-cell.status-absence{background:#4a3420}
+.cell-details{float:right;min-height:20px;margin:-3px -5px 1px 3px;padding:0 4px;border-radius:7px;background:transparent;color:#8292a5;font-size:.7rem;letter-spacing:-.08em}
+.cell-details:hover{background:#ffffff14;color:#fff}.inline-entry{width:100%;min-height:38px;padding:6px 7px;border:2px solid #5ee08c;border-radius:8px;background:#07110c;color:#fff;font-size:.76rem;font-weight:800}
 .rest-label{color:#718092;font-weight:650}.all-total{padding:7px;text-align:center;background:#152131;color:#b9c6d5;font-size:.72rem;font-weight:800}
 .month-table tfoot th,.month-table tfoot td{position:sticky;bottom:0;z-index:2;padding:9px 7px;background:#263951;color:#fff;text-align:center;font-size:.78rem;font-weight:900}
 .month-table tfoot th{left:0;z-index:3;text-align:left}
@@ -90,6 +92,6 @@ dialog::backdrop{background:#02060bc9;backdrop-filter:blur(5px)}
   .date-cell{position:static;width:17mm;padding:.55mm 1mm;background:#f1f4f7!important;color:#000;font-size:5pt}
   .month-cell{height:auto;min-height:0;padding:.45mm .7mm;background:#fff!important;color:#000!important}
   .day-main{color:#000!important;font-size:5.2pt;line-height:1.12}.day-total{display:inline;margin:0 0 0 1mm;color:#08732c!important;font-size:4.8pt}
-  .day-note{display:none}.rest-label{color:#666!important}.all-total{padding:.4mm;background:#f1f4f7!important;color:#000;font-size:4.8pt}
+  .cell-details{display:none!important}.day-note{display:none}.rest-label{color:#666!important}.all-total{padding:.4mm;background:#f1f4f7!important;color:#000;font-size:4.8pt}
   .month-table tfoot th,.month-table tfoot td{position:static;padding:.7mm;background:#dce7f1!important;color:#000;font-size:5.2pt}
 }
