@@ -293,7 +293,7 @@ function beginInlineEdit(cell){
     }catch(error){saving=false;setStatus(error.message,"error");renderMonth()}
   };
   input.onkeydown=event=>{
-    if(event.key==="Enter"){event.preventDefault();moveAfterSave=event.shiftKey?-1:1;input.blur()}
+    if(event.key==="Enter"){event.preventDefault();moveAfterSave=event.shiftKey?-1:1;void save()}
     if(event.key==="Escape"){event.preventDefault();renderMonth()}
   };
   input.onblur=save;
