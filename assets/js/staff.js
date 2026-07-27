@@ -5,6 +5,8 @@ const TOKEN=localStorage.getItem("notifications_beta_admin_token")||"";
 const TYPES={work:"Travail",cfa:"CFA",rest:"Repos",leave:"Congés",sick:"Arrêt maladie",absence:"Absence"};
 const $=id=>document.getElementById(id);
 let state={employees:[],shifts:[],range:null,month:"",google:{configured:false,connected:false,events:[],visible:true}};
+const undoStack=[];
+let undoing=false;
 
 function esc(value){return String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]))}
 function setStatus(message,type=""){$("staffStatus").textContent=message;$("staffStatus").className="staff-status "+type}
@@ -31,6 +33,39 @@ function shiftMinutes(shift){
 function duration(value){const total=Math.max(0,Number(value)||0);return`${Math.floor(total/60)}h${String(total%60).padStart(2,"0")}`}
 function shiftKey(employeeId,date){return`${employeeId}:${date}`}
 function shiftMap(){return new Map(state.shifts.map(shift=>[shiftKey(shift.employeeId,shift.date),shift]))}
+function shiftSnapshot(shift,employeeId=shift?.employeeId,date=shift?.date){
+  if(!shift)return null;
+  return{employeeId:Number(employeeId),date,status:shift.status||"rest",
+    morningStart:shift.morningStart||"",morningEnd:shift.morningEnd||"",
+    afternoonStart:shift.afternoonStart||"",afternoonEnd:shift.afternoonEnd||"",note:shift.note||""};
+}
+function sameShift(left,right){return JSON.stringify(left)===JSON.stringify(right)}
+function rememberChange(employeeId,date,before,after){
+  undoStack.push({employeeId,date,before:shiftSnapshot(before,employeeId,date),after:shiftSnapshot(after,employeeId,date)});
+  if(undoStack.length>30)undoStack.shift();
+}
+async function undoLastChange(){
+  if(undoing)return;
+  const change=undoStack.at(-1);
+  if(!change){setStatus("Aucune modification à annuler.","error");return}
+  undoing=true;
+  try{
+    const planning=await api("/api/admin/staff-planning?month="+encodeURIComponent(change.date.slice(0,7)));
+    const current=planning.shifts.find(item=>item.employeeId===change.employeeId&&item.date===change.date);
+    if(!sameShift(shiftSnapshot(current,change.employeeId,change.date),change.after)){
+      setStatus("Annulation impossible : cette journée a été modifiée depuis.","error");return;
+    }
+    if(change.before){
+      await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(change.before)});
+    }else{
+      await api(`/api/admin/staff-planning/shifts/${change.employeeId}/${change.date}`,{method:"DELETE"});
+    }
+    undoStack.pop();
+    await load(true);
+    setStatus("Dernière modification annulée.","success");
+  }catch(error){setStatus(error.message,"error")}
+  finally{undoing=false}
+}
 function isoWeek(value){
   const date=parseDate(value);const day=(date.getUTCDay()+6)%7;date.setUTCDate(date.getUTCDate()-day+3);
   const firstThursday=new Date(Date.UTC(date.getUTCFullYear(),0,4));const firstDay=(firstThursday.getUTCDay()+6)%7;
@@ -283,6 +318,7 @@ function beginInlineEdit(cell){
       if(payload.empty){
         if(shift)await api(`/api/admin/staff-planning/shifts/${employeeId}/${date}`,{method:"DELETE"});
       }else await api("/api/admin/staff-planning/shifts",{method:"PUT",body:JSON.stringify(payload)});
+      if(shift||!payload.empty)rememberChange(employeeId,date,shift,payload.empty?null:payload);
       await load(true);setStatus(payload.empty?"Journée en repos.":"Case enregistrée.","success");
       if(moveAfterSave){
         const nextDate=addDays(date,moveAfterSave);
@@ -362,6 +398,13 @@ window.addEventListener("afterprint",()=>{
   document.querySelectorAll(".print-excluded").forEach(row=>row.classList.remove("print-excluded"));
   $("printTitle").textContent="";
   delete document.body.dataset.printEmployee;
+});
+document.addEventListener("keydown",event=>{
+  if(!(event.metaKey||event.ctrlKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="z")return;
+  const inline=document.activeElement?.classList?.contains("inline-entry")?document.activeElement:null;
+  if(inline?.value.trim())return;
+  event.preventDefault();
+  void undoLastChange();
 });
 document.querySelectorAll("[data-section]").forEach(button=>button.onclick=()=>selectSection(button.dataset.section));
 document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>selectView(button.dataset.view));

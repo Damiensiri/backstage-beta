@@ -138,6 +138,9 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/clockText=text\.replace/);
   assert.match(staffScript,/Horaire, AMDEL, PMDEL ou DEL/);
   assert.match(staffScript,/moveAfterSave=event\.shiftKey\?-1:1;void save\(\)/);
+  assert.match(staffScript,/function undoLastChange/);
+  assert.match(staffScript,/event\.metaKey\|\|event\.ctrlKey/);
+  assert.match(staffScript,/Dernière modification annulée/);
   assert.match(staffScript,/progressive&&!input\.value\.trim\(\)/);
   assert.match(staffScript,/normalized==="amdel"\|\|normalized==="pmdel"/);
   assert.match(staffScript,/normalized==="del"/);
