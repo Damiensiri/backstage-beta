@@ -65,7 +65,7 @@ function directText(shift){
   return ranges.join(" / ");
 }
 function normalizeWord(value){return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function parseDirectEntry(value,employeeId,date){
+function parseDirectEntry(value,employeeId,date,currentShift=null){
   const text=String(value||"").trim();const normalized=normalizeWord(text);
   if(!text)return{empty:true};
   if(["repos","repo"].includes(normalized))return{employeeId,date,status:"rest"};
@@ -73,8 +73,9 @@ function parseDirectEntry(value,employeeId,date){
   if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
   if(normalized==="at"||normalized.includes("arret")||normalized.includes("maladie"))return{employeeId,date,status:"sick"};
   if(normalized.includes("absence"))return{employeeId,date,status:"absence"};
-  const compact=[...text.matchAll(/\b(\d{3,4})\s*[.,\s]\s*(\d{3,4})\b/g)];
-  const written=[...text.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
+  const clockText=text.replace(/\b(\d{1,2})[.,](\d{2})\b/g,"$1$2");
+  const compact=[...clockText.matchAll(/\b(\d{3,4})\s*[.,\s]\s*(\d{3,4})\b/g)];
+  const written=[...clockText.matchAll(/(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?\s*[-–—]\s*(\d{1,2})(?:\s*[:hH]\s*(\d{1,2}))?/g)];
   const rawRanges=compact.length?compact.map(match=>{
     const from=match[1].padStart(4,"0"),to=match[2].padStart(4,"0");
     return[from.slice(0,2),from.slice(2),to.slice(0,2),to.slice(2)];
@@ -90,9 +91,15 @@ function parseDirectEntry(value,employeeId,date){
   const payload={employeeId,date,status:"work",morningStart:"",morningEnd:"",afternoonStart:"",afternoonEnd:"",note:""};
   if(ranges.length===1&&Number(ranges[0].start.slice(0,2))>=13){
     payload.afternoonStart=ranges[0].start;payload.afternoonEnd=ranges[0].end;
+    if(currentShift?.status==="work"){
+      payload.morningStart=currentShift.morningStart||"";payload.morningEnd=currentShift.morningEnd||"";
+    }
   }else{
     payload.morningStart=ranges[0].start;payload.morningEnd=ranges[0].end;
     if(ranges[1]){payload.afternoonStart=ranges[1].start;payload.afternoonEnd=ranges[1].end}
+    else if(currentShift?.status==="work"){
+      payload.afternoonStart=currentShift.afternoonStart||"";payload.afternoonEnd=currentShift.afternoonEnd||"";
+    }
   }
   return payload;
 }
@@ -256,7 +263,7 @@ function beginInlineEdit(cell){
   let moveAfterSave=0;
   const save=async()=>{
     if(saving)return;saving=true;
-    const payload=parseDirectEntry(input.value,employeeId,date);
+    const payload=parseDirectEntry(input.value,employeeId,date,shift);
     if(payload.error){saving=false;setStatus(payload.error,"error");input.focus();input.select();return}
     if(!payload.empty)payload.note=shift?.note||"";
     try{
