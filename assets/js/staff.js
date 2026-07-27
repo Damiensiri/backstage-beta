@@ -195,7 +195,8 @@ function googleWeekHtml(days){
     return start<=last&&end>=first;
   });
   if(!events.length)return'<span class="google-empty">—</span>';
-  return`<div class="google-week-grid">${events.map(event=>{
+  const occupied=[];
+  const items=events.map(event=>{
     const eventStart=String(event.start||event.date||"").slice(0,10);
     let eventEnd=String(event.end||eventStart).slice(0,10);
     if(event.allDay&&eventEnd>eventStart)eventEnd=addDays(eventEnd,-1);
@@ -203,10 +204,16 @@ function googleWeekHtml(days){
     const end=eventEnd>last?last:eventEnd;
     const column=dayDistance(first,start)+1;
     const span=Math.max(1,dayDistance(start,end)+1);
-    return`<div class="google-event google-week-event" style="--calendar-color:${calendarColor(event)};grid-column:${column}/span ${span}"
+    let row=0;
+    while(occupied[row]?.some(day=>day>=column&&day<column+span))row++;
+    if(!occupied[row])occupied[row]=[];
+    for(let day=column;day<column+span;day++)occupied[row].push(day);
+    return{event,eventStart,eventEnd,column,span,row:row+1};
+  });
+  return`<div class="google-week-grid">${items.map(({event,eventStart,eventEnd,column,span,row})=>
+    `<div class="google-event google-week-event" style="--calendar-color:${calendarColor(event)};grid-column:${column}/span ${span};grid-row:${row}"
       title="${esc(event.calendarName||"Calendrier")}"><strong>${span>1?`${shortDate(eventStart)} → ${shortDate(eventEnd)}`:esc(googleTime(event))}</strong>
-      <span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}</div>`;
-  }).join("")}</div>`;
+      <span>${esc(event.title)}</span>${event.location?`<small>${esc(event.location)}</small>`:""}</div>`).join("")}</div>`;
 }
 function renderGooglePanel(){
   const google=state.google;
