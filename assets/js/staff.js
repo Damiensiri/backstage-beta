@@ -257,12 +257,15 @@ function beginInlineEdit(cell){
   const employeeId=Number(cell.dataset.employee),date=cell.dataset.date;
   const shift=state.shifts.find(item=>item.employeeId===employeeId&&item.date===date);
   const input=document.createElement("input");input.className="inline-entry";input.type="text";
-  input.value=directText(shift);input.placeholder="0700,1200/1300,1700";
-  cell.innerHTML="";cell.append(input);input.focus();input.select();
+  const progressive=shift?.status==="work";
+  input.value=progressive?"":directText(shift);
+  input.placeholder=progressive?"Ajouter ou modifier matin/après-midi":"0700,1200/1300,1700";
+  cell.innerHTML="";cell.append(input);input.focus();if(!progressive)input.select();
   let saving=false;
   let moveAfterSave=0;
   const save=async()=>{
     if(saving)return;saving=true;
+    if(progressive&&!input.value.trim()){renderMonth();return}
     const payload=parseDirectEntry(input.value,employeeId,date,shift);
     if(payload.error){saving=false;setStatus(payload.error,"error");input.focus();input.select();return}
     if(!payload.empty)payload.note=shift?.note||"";

@@ -136,6 +136,8 @@ test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
   assert.match(staffScript,/\[\\?\.?,\\?s\]/);
   assert.match(staffScript,/currentShift\?\.status==="work"/);
   assert.match(staffScript,/clockText=text\.replace/);
+  assert.match(staffScript,/Ajouter ou modifier matin\/après-midi/);
+  assert.match(staffScript,/progressive&&!input\.value\.trim\(\)/);
   assert.match(staff,/0700\.12\.00/);
   assert.match(staffScript,/moveAfterSave/);
   assert.match(staffScript,/className="inline-entry"/);
