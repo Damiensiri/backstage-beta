@@ -68,6 +68,16 @@ function normalizeWord(value){return value.toLowerCase().normalize("NFD").replac
 function parseDirectEntry(value,employeeId,date,currentShift=null){
   const text=String(value||"").trim();const normalized=normalizeWord(text);
   if(!text)return{empty:true};
+  if(normalized==="del")return{empty:true};
+  if(normalized==="amdel"||normalized==="pmdel"){
+    if(currentShift?.status!=="work")return{empty:true};
+    const payload={employeeId,date,status:"work",morningStart:currentShift.morningStart||"",morningEnd:currentShift.morningEnd||"",
+      afternoonStart:currentShift.afternoonStart||"",afternoonEnd:currentShift.afternoonEnd||"",note:currentShift.note||""};
+    if(normalized==="amdel"){payload.morningStart="";payload.morningEnd=""}
+    else{payload.afternoonStart="";payload.afternoonEnd=""}
+    if(!payload.morningStart&&!payload.afternoonStart)return{empty:true};
+    return payload;
+  }
   if(["repos","repo"].includes(normalized))return{employeeId,date,status:"rest"};
   if(normalized==="cfa")return{employeeId,date,status:"cfa"};
   if(["conge","conges"].includes(normalized))return{employeeId,date,status:"leave"};
@@ -259,7 +269,7 @@ function beginInlineEdit(cell){
   const input=document.createElement("input");input.className="inline-entry";input.type="text";
   const progressive=shift?.status==="work";
   input.value=progressive?"":directText(shift);
-  input.placeholder=progressive?"Ajouter ou modifier matin/après-midi":"0700,1200/1300,1700";
+  input.placeholder=progressive?"Horaire, AMDEL, PMDEL ou DEL":"0700,1200/1300,1700";
   cell.innerHTML="";cell.append(input);input.focus();if(!progressive)input.select();
   let saving=false;
   let moveAfterSave=0;
