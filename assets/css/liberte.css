@@ -5,3 +5,46 @@
 .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-heading h2{margin-bottom:2px}.panel-heading p{margin:0}.filters{display:grid;grid-template-columns:1fr minmax(180px,auto);gap:10px;margin:14px 0}.request-list{display:grid;max-height:min(66dvh,760px);gap:10px;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:#52667c #0b121b}.request-card{padding:15px;border:1px solid #2d3b4b;border-radius:15px;background:#0b121b}.request-card.pending{border-color:#d7a94a}.request-top,.request-actions,.exception-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.request-top h3{margin:0}.badge{display:inline-flex;padding:6px 9px;border-radius:999px;background:#263344;color:#dfe9f2;font-size:11px;font-weight:850}.badge.pending{background:#5b451c;color:#ffe3a3}.badge.completed{background:#16452b;color:#a5f0bd}.request-meta{display:flex;flex-wrap:wrap;gap:7px 14px;margin:8px 0 12px;color:#9eacbd;font-size:12px}.request-edit{display:grid;grid-template-columns:190px 1fr;gap:10px}.request-actions{justify-content:flex-end;margin-top:10px}.compact-list{display:grid;max-height:240px;gap:8px;overflow:auto;margin-top:14px}.exception-row{padding:10px;border:1px solid #2d3b4b;border-radius:12px;background:#0b121b}.exception-copy strong,.exception-copy span{display:block}.exception-copy span{margin-top:3px;color:#9eacbd;font-size:11px}
 @media(max-width:760px){.liberte-grid{grid-template-columns:1fr}.form-grid,.request-edit,.filters{grid-template-columns:1fr}.form-grid .full,.form-grid button{grid-column:auto}.request-top,.request-actions{align-items:flex-start;flex-wrap:wrap}.request-actions{justify-content:stretch}.request-actions button{flex:1}}
 .free-request{display:flex!important;grid-column:1/-1;align-items:center;gap:10px;padding:10px 12px;border:1px solid #3a495a;border-radius:12px;background:#0a121c}.free-request input{width:22px!important;height:22px;min-height:0!important;accent-color:#68e18f}.free-request span{display:grid;gap:2px}.free-request small{color:#9eacbd;font-size:11px}
+
+/* Pilote UX 2026-07-28 : demandes prioritaires, logique inchangée. */
+.liberte-shell{padding-top:calc(18px + env(safe-area-inset-top))}
+.liberte-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:8px;padding-right:64px}
+.liberte-title-row h1{margin:0;font-size:clamp(30px,5vw,42px);line-height:1.05}
+.liberte-title-row .beta-pill{flex:0 0 auto;margin:0}
+.liberte-eyebrow{margin:0 0 4px;color:#8ea0b4;font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.liberte-shell>.status{min-height:18px;margin:4px 2px 6px;font-size:12px}
+.rules-card,.liberte-panel{margin:10px 0;padding:14px;border-radius:16px;box-shadow:0 10px 28px #0003}
+.rules-card{padding:0;overflow:hidden}
+.rules-card summary{min-height:42px;padding:0 13px;display:flex;align-items:center;cursor:pointer;color:#b8e6c7;font-size:12px;font-weight:850}
+.rules-card[open] summary{border-bottom:1px solid #68e18f35;background:#68e18f0a}
+.rules-body{padding:10px 13px}
+.rules-card p{margin:5px 0;font-size:12px;line-height:1.4}
+.rules-card h2,.liberte-panel h2{margin:0 0 8px;font-size:18px}
+.panel-heading{align-items:flex-start}
+.filters{gap:6px;margin:8px 0}
+.filters input,.filters select{min-height:42px;padding:9px 11px;border-radius:10px}
+.request-list{gap:6px;max-height:min(65dvh,720px)}
+.request-card{padding:10px 11px;border-radius:11px}
+.request-top h3{font-size:14px}
+.badge{padding:4px 7px;font-size:10px}
+.request-meta{gap:5px 10px;margin:5px 0 8px;font-size:11px}
+.request-edit{grid-template-columns:170px 1fr;gap:6px}
+.request-edit input,.request-edit select{min-height:40px;padding:8px 9px;border-radius:9px}
+.free-request{padding:8px 10px;border-radius:9px}
+.request-actions{gap:6px;margin-top:7px}
+.request-actions button{min-height:38px;padding:7px 10px;font-size:11px}
+.liberte-grid{gap:8px}
+.liberte-grid .liberte-panel{margin:0}
+.form-grid{gap:8px}
+.form-grid input,.form-grid select{min-height:42px;padding:9px 10px;border-radius:10px}
+.form-grid button{min-height:42px}
+.compact-list{gap:6px;margin-top:9px}
+.exception-row{padding:8px;border-radius:9px}
+@media(max-width:760px){
+  .liberte-shell{padding-inline:11px}
+  .liberte-title-row{padding-right:58px}
+  .liberte-title-row .beta-pill{position:absolute;top:calc(18px + env(safe-area-inset-top));right:72px}
+  .rules-card,.liberte-panel{padding:11px}
+  .rules-card{padding:0}
+  .request-edit{grid-template-columns:1fr}
+}
