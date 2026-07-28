@@ -7,12 +7,14 @@
   <link rel="manifest" href="manifest.webmanifest">
   <title>Utilisateurs — Backstage bêta</title>
   <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-2">
-  <link rel="stylesheet" href="assets/css/users.css?v=20260716-2">
+  <link rel="stylesheet" href="assets/css/users.css?v=20260728-1">
 </head>
 <body class="users-page">
   <main class="users-shell">
-    <header class="users-header"><span class="beta-pill">BÊTA · D1</span><h1>Utilisateurs</h1>
-      <p>Les comptes créés ici sont isolés dans Cloudflare/D1 bêta.</p></header>
+    <header class="users-header users-title-row">
+      <div><p class="users-eyebrow">Comptes et accès</p><h1>Utilisateurs</h1></div>
+      <span class="beta-pill">BÊTA · D1</span>
+    </header>
     <p id="connectionStatus" class="status" role="status"></p>
     <section class="users-panel create-panel" aria-labelledby="createTitle">
       <button id="createPanelToggle" class="create-panel-toggle" type="button" aria-expanded="false" aria-controls="createPanelBody">
@@ -29,7 +31,7 @@
       <button type="submit">Créer le compte bêta</button><p id="createStatus" class="status" role="status"></p></form>
       </div></div>
     </section>
-    <section class="users-panel"><div class="panel-heading"><h2>Comptes bêta</h2><button id="refreshBtn" class="secondary" type="button">Actualiser</button></div>
+    <section class="users-panel users-directory"><div class="panel-heading"><div><p class="users-eyebrow">Annuaire</p><h2>Comptes bêta</h2></div><button id="refreshBtn" class="secondary" type="button">Actualiser</button></div>
       <label class="users-search"><span>Rechercher un compte</span><input id="usersSearch" type="search" autocomplete="off" placeholder="Nom, prénom ou adresse email…"></label>
       <div id="usersList" class="users-list"><p class="empty">Chargement…</p></div></section>
   </main>
