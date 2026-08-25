@@ -69,7 +69,8 @@ button.secondary{width:auto;padding:9px 12px;border:1px solid #ffffff30;backgrou
 .form-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-actions .send{background:#63d492;color:#092719}
 .form-actions .schedule{grid-column:1/-1;background:#70c7f5;color:#061827}
-.schedule-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 10px;padding:10px;border:1px solid #ffffff1f;border-radius:14px;background:#ffffff0a}
+.schedule-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:8px 0 10px;padding:10px;border:1px solid #ffffff1f;border-radius:14px;background:#ffffff0a}
+.schedule-fields label{min-width:0}
 .action-help{margin:10px 2px 0;color:#b9d6e6;font-size:11px;line-height:1.45}
 .status{min-height:18px;margin:10px 2px 0;color:#b9ddf2;font-size:12px}
 .status.error{color:#ffaaa7}
@@ -184,6 +185,7 @@ button.secondary{padding:7px 10px;font-size:11px}
   .admin-header{display:flex;padding-right:58px}
   .admin-header> .environment{position:absolute;top:calc(18px + env(safe-area-inset-top));right:72px}
   .panel{padding:11px}
+  .schedule-fields{grid-template-columns:1fr}
   .space-editor-sheet .panel{padding:13px}
 }
 
