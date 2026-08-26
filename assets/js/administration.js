@@ -50,6 +50,7 @@
     hourProgramStart:document.getElementById("hourProgramStart"),
     hourProgramEnd:document.getElementById("hourProgramEnd"),
     hourProgramGrid:document.getElementById("hourProgramGrid"),
+    applyAllPaddockHours:document.getElementById("applyAllPaddockHoursBtn"),
     saveHourProgram:document.getElementById("saveHourProgramBtn"),
     deleteHourProgram:document.getElementById("deleteHourProgramBtn"),
     resetHourProgram:document.getElementById("resetHourProgramBtn"),
@@ -370,6 +371,7 @@
 
   function renderHourProgramGrid(entries=[]){
     if(!elements.hourProgramGrid)return;
+    if(elements.applyAllPaddockHours)elements.applyAllPaddockHours.hidden=hourProgramScope!=="paddocks";
     const currentEntries=entries.length?entries:readHourProgramEntriesFromDom();
     elements.hourProgramGrid.replaceChildren();
     hourProgramTargets().forEach(target=>{
@@ -382,7 +384,7 @@
         const day=index+1;
         const row=currentEntries.find(item=>item.targetSlug===target.slug&&Number(item.day)===day)||baseHourProgramEntry(target,day);
         const line=document.createElement("div");
-        line.className=`hour-program-row ${hourProgramScope==="general"?"is-general":""}`;
+        line.className=`hour-program-row is-${hourProgramScope}`;
         line.dataset.target=target.slug;
         line.dataset.day=String(day);
         const commonHours=`
@@ -392,31 +394,24 @@
         `;
         if(hourProgramScope==="general"){
           line.innerHTML=commonHours;
+        }else if(hourProgramScope==="work"){
+          line.innerHTML=`
+            <strong>${label}</strong>
+            <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
+            <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
+          `;
         }else{
           line.innerHTML=`
             <strong>${label}</strong>
             <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
-              <option value="ouvert">Auto / ouvert</option>
-              <option value="prevision">Prévu</option>
+              <option value="ouvert">Ouvert</option>
               <option value="ferme">Fermé</option>
               <option value="hors-service">Hors service</option>
             </select>
             <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
             <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
-            ${hourProgramScope==="work"?`<input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info / blabla affiché">`:""}
           `;
           line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
-        }
-        if(hourProgramScope==="work"){
-          const options=document.createElement("div");
-          options.className="program-inline-options";
-          options.innerHTML=`
-            <label>Liberté <select data-field="liberte"><option value="non">Non</option><option value="oui">Oui</option></select></label>
-            <label>Longe <select data-field="longe"><option value="non">Non</option><option value="oui">Oui</option></select></label>
-          `;
-          options.querySelector('[data-field="liberte"]').value=row.liberte||"non";
-          options.querySelector('[data-field="longe"]').value=row.longe||"non";
-          line.appendChild(options);
         }
         card.appendChild(line);
       });
@@ -440,6 +435,35 @@
         longe:value("longe")
       };
     });
+  }
+
+  function applyFirstPaddockProgramToAll(){
+    if(hourProgramScope!=="paddocks"||!elements.hourProgramGrid)return;
+    const targets=hourProgramTargets();
+    const source=targets[0]?.slug;
+    if(!source)return;
+    const sourceRows=[...elements.hourProgramGrid.querySelectorAll(`.hour-program-row[data-target="${source}"]`)];
+    const values=new Map(sourceRows.map(row=>[
+      Number(row.dataset.day),
+      {
+        manualStatus:row.querySelector('[data-field="manualStatus"]')?.value||"ouvert",
+        opensAt:row.querySelector('[data-field="opensAt"]')?.value||"",
+        closesAt:row.querySelector('[data-field="closesAt"]')?.value||""
+      }
+    ]));
+    targets.slice(1).forEach(target=>{
+      [...elements.hourProgramGrid.querySelectorAll(`.hour-program-row[data-target="${target.slug}"]`)].forEach(row=>{
+        const value=values.get(Number(row.dataset.day));
+        if(!value)return;
+        const status=row.querySelector('[data-field="manualStatus"]');
+        const open=row.querySelector('[data-field="opensAt"]');
+        const close=row.querySelector('[data-field="closesAt"]');
+        if(status)status.value=value.manualStatus;
+        if(open)open.value=value.opensAt;
+        if(close)close.value=value.closesAt;
+      });
+    });
+    setStatus(elements.hourProgramStatus,"Grille du premier paddock appliquée aux 3 paddocks.","success");
   }
 
   function resetHourProgram(){
@@ -825,6 +849,7 @@
   });
 
   elements.resetHourProgram.addEventListener("click",resetHourProgram);
+  elements.applyAllPaddockHours?.addEventListener("click",applyFirstPaddockProgramToAll);
   elements.refreshHourPrograms.addEventListener("click",async()=>{
     setStatus(elements.hourProgramStatus,"Actualisation…");
     try{
