@@ -403,8 +403,7 @@
             </select>
             <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
             <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
-            <input data-field="specialHours" maxlength="120" value="${esc(row.specialHours)}" placeholder="Texte statut">
-            <input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info affichée">
+            ${hourProgramScope==="work"?`<input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info / blabla affiché">`:""}
           `;
           line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
         }
