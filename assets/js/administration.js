@@ -354,7 +354,12 @@
 
   function hourProgramTargets(scope=hourProgramScope){
     if(scope==="general")return[{slug:"general",label:"Écuries"}];
-    const wanted=scope==="work"?["carriere","manege"]:["maison","grande","beudot"];
+    if(scope==="paddocks")return[
+      {slug:"maison",label:"Maison"},
+      {slug:"grande",label:"Grande voie"},
+      {slug:"beudot",label:"Beudot"}
+    ];
+    const wanted=["carriere","manege"];
     return operations.spaces.filter(space=>wanted.includes(space.slug))
       .map(space=>({slug:space.slug,label:space.label}));
   }
