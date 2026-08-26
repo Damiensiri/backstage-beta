@@ -131,6 +131,7 @@ button.compact{width:auto;padding:8px 10px;font-size:11px}
 .hour-program-target{min-width:0;padding:12px;border:1px solid #ffffff22;border-radius:16px;background:#071b2b66;overflow-x:auto}
 .hour-program-target h3{margin:0 0 10px;font-size:15px}
 .hour-program-row{display:grid;grid-template-columns:90px 130px 104px 104px minmax(150px,1fr) minmax(170px,1fr);gap:7px;align-items:center;min-width:780px;padding:7px 0;border-top:1px solid #ffffff12}
+.hour-program-row.is-general{grid-template-columns:90px 120px 120px;min-width:0;max-width:430px}
 .hour-program-row:first-of-type{border-top:0}
 .hour-program-row strong{font-size:11px;color:#d8e9f4}
 .hour-program-row input,.hour-program-row select{margin:0;padding:8px 9px;font-size:13px}
@@ -153,6 +154,7 @@ button.compact{width:auto;padding:8px 10px;font-size:11px}
   .program-tabs button{min-width:94px}
   .hour-program-target{padding:10px}
   .hour-program-row{min-width:710px;grid-template-columns:78px 122px 96px 96px 135px 150px}
+  .hour-program-row.is-general{grid-template-columns:78px 1fr 1fr;min-width:0;max-width:none}
   .program-inline-options{margin-left:78px}
   .hour-program-item{align-items:flex-start;flex-direction:column}
 }

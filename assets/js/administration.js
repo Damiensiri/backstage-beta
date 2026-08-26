@@ -382,23 +382,32 @@
         const day=index+1;
         const row=currentEntries.find(item=>item.targetSlug===target.slug&&Number(item.day)===day)||baseHourProgramEntry(target,day);
         const line=document.createElement("div");
-        line.className="hour-program-row";
+        line.className=`hour-program-row ${hourProgramScope==="general"?"is-general":""}`;
         line.dataset.target=target.slug;
         line.dataset.day=String(day);
-        line.innerHTML=`
+        const commonHours=`
           <strong>${label}</strong>
-          <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
-            <option value="ouvert">Auto / ouvert</option>
-            <option value="prevision">Prévu</option>
-            <option value="ferme">Fermé</option>
-            <option value="hors-service">Hors service</option>
-          </select>
           <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
           <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
-          <input data-field="specialHours" maxlength="120" value="${esc(row.specialHours)}" placeholder="Texte statut">
-          <input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info affichée">
         `;
-        line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
+        if(hourProgramScope==="general"){
+          line.innerHTML=commonHours;
+        }else{
+          line.innerHTML=`
+            <strong>${label}</strong>
+            <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
+              <option value="ouvert">Auto / ouvert</option>
+              <option value="prevision">Prévu</option>
+              <option value="ferme">Fermé</option>
+              <option value="hors-service">Hors service</option>
+            </select>
+            <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
+            <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
+            <input data-field="specialHours" maxlength="120" value="${esc(row.specialHours)}" placeholder="Texte statut">
+            <input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info affichée">
+          `;
+          line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
+        }
         if(hourProgramScope==="work"){
           const options=document.createElement("div");
           options.className="program-inline-options";
