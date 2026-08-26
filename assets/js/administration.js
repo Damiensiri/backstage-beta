@@ -213,8 +213,10 @@
       name.textContent=space.label;
       const detail=document.createElement("span");
       const statusLabel={ouvert:"Ouvert",prevision:"Prévision",ferme:"Fermé","hors-service":"Hors service"}[current.statut_auto||space.manual_status]||"—";
-      const hours=schedule?`${schedule.opens_at}–${schedule.closes_at}`:"—";
-      detail.textContent=`${statusLabel} / ${hours}${space.info?"  💬":""}`;
+      const baseHours=schedule?`${schedule.opens_at}–${schedule.closes_at}`:"—";
+      const effectiveHours=current.horaire_affiche?current.horaire_affiche.replace(/\s-\s/g,"–"):baseHours;
+      const effectiveNote=effectiveHours!==baseHours?` · aujourd’hui ${effectiveHours}`:"";
+      detail.textContent=`${statusLabel} / actuel ${baseHours}${effectiveNote}${space.info?"  💬":""}`;
       summary.append(name,detail);
 
       const open=document.createElement("button");

@@ -6,7 +6,7 @@
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/administration.css?v=20260826-3">
+  <link rel="stylesheet" href="assets/css/administration.css?v=20260826-4">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -111,8 +111,8 @@
       <p id="spaceStatusMessage" class="status" role="status"></p>
     </div>
     <div class="panel">
-      <h2>Horaires propres à cet espace</h2>
-      <p class="section-help">Ces horaires sont indépendants des horaires généraux des écuries.</p>
+      <h2>Configuration actuelle de cet espace</h2>
+      <p class="section-help">Point d’entrée direct : ces horaires sont la base actuelle de l’espace. Une programmation datée peut prendre le relais jour par jour.</p>
       <div id="spaceSchedules" class="schedule-grid"></div>
       <button id="saveSpaceSchedulesBtn" type="button">Enregistrer les horaires</button>
       <p id="spaceSchedulesStatus" class="status" role="status"></p>
@@ -178,8 +178,8 @@
       <div id="hourProgramsList" class="hour-program-list"></div>
     </div>
     <div class="panel">
-      <h2>Horaires généraux des écuries</h2>
-      <p class="section-help">Utilisés uniquement par le bandeau de l’index et la page Horaires.</p>
+      <h2>Configuration actuelle des écuries</h2>
+      <p class="section-help">Point d’entrée direct : ces horaires sont la base actuelle pour l’accueil et la page Horaires. Une programmation datée peut prendre le relais jour par jour.</p>
       <div id="generalSchedules" class="schedule-grid"></div>
       <button id="saveGeneralSchedulesBtn" type="button">Enregistrer les horaires des écuries</button>
       <p id="generalSchedulesStatus" class="status" role="status"></p>
@@ -237,7 +237,7 @@
 </main>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="assets/js/notification-format.js?v=20260716-2"></script>
-<script src="assets/js/administration.js?v=20260826-3"></script>
+<script src="assets/js/administration.js?v=20260826-4"></script>
 <script src="assets/js/backstage-push.js?v=20260716-2"></script>
 <script src="assets/js/status-realtime.js?v=20260716-2"></script>
 <script src="assets/js/backstage-shell.js?v=20260719-2"></script>
