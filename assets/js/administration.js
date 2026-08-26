@@ -65,6 +65,7 @@
   let alerts=[];
   let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],homeAlert:{}};
   let hourProgramScope="general";
+  let hourProgramDrafts=new Map();
   let publicStatuses=[];
   let liveRefreshTimer=null;
   const days=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
@@ -372,7 +373,7 @@
   function renderHourProgramGrid(entries=[]){
     if(!elements.hourProgramGrid)return;
     if(elements.applyAllPaddockHours)elements.applyAllPaddockHours.hidden=hourProgramScope!=="paddocks";
-    const currentEntries=entries.length?entries:readHourProgramEntriesFromDom();
+    const currentEntries=entries.length?entries:(hourProgramDrafts.get(hourProgramScope)||[]);
     elements.hourProgramGrid.replaceChildren();
     hourProgramTargets().forEach(target=>{
       const card=document.createElement("article");
@@ -437,6 +438,18 @@
     });
   }
 
+  function rememberHourProgramDraft(){
+    if(!elements.hourProgramGrid?.children.length)return;
+    hourProgramDrafts.set(hourProgramScope,readHourProgramEntriesFromDom());
+  }
+
+  function filledHourProgramDrafts(){
+    rememberHourProgramDraft();
+    return["general","work","paddocks"]
+      .map(scope=>({scope,entries:hourProgramDrafts.get(scope)||[]}))
+      .filter(item=>item.entries.length);
+  }
+
   function applyFirstPaddockProgramToAll(){
     if(hourProgramScope!=="paddocks"||!elements.hourProgramGrid)return;
     const targets=hourProgramTargets();
@@ -467,6 +480,7 @@
   }
 
   function resetHourProgram(){
+    hourProgramDrafts=new Map();
     elements.hourProgramId.value="";
     elements.hourProgramName.value="";
     elements.hourProgramStart.value="";
@@ -477,6 +491,7 @@
   }
 
   function editHourProgram(program){
+    hourProgramDrafts=new Map([[program.scope,program.entries||[]]]);
     hourProgramScope=program.scope;
     document.querySelectorAll("[data-hour-program-scope]").forEach(button=>{
       button.classList.toggle("selected",button.dataset.hourProgramScope===hourProgramScope);
@@ -840,11 +855,15 @@
 
   document.querySelectorAll("[data-hour-program-scope]").forEach(button=>{
     button.addEventListener("click",()=>{
+      if(elements.hourProgramId.value&&button.dataset.hourProgramScope!==hourProgramScope){
+        setStatus(elements.hourProgramStatus,"Terminez ou annulez la modification en cours avant de changer d’onglet.","error");
+        return;
+      }
+      rememberHourProgramDraft();
       hourProgramScope=button.dataset.hourProgramScope;
       document.querySelectorAll("[data-hour-program-scope]").forEach(item=>item.classList.toggle("selected",item===button));
-      elements.hourProgramId.value="";
-      elements.deleteHourProgram.hidden=true;
-      renderHourProgramGrid([]);
+      if(!elements.hourProgramId.value)elements.deleteHourProgram.hidden=true;
+      renderHourProgramGrid(hourProgramDrafts.get(hourProgramScope)||[]);
     });
   });
 
@@ -859,22 +878,39 @@
   });
   elements.saveHourProgram.addEventListener("click",async()=>{
     const id=elements.hourProgramId.value;
-    const payload={
-      name:elements.hourProgramName.value,
-      scope:hourProgramScope,
-      startsOn:elements.hourProgramStart.value,
-      endsOn:elements.hourProgramEnd.value,
-      entries:readHourProgramEntriesFromDom()
-    };
+    rememberHourProgramDraft();
     setStatus(elements.hourProgramStatus,"Enregistrement…");
     try{
-      await api(id?`/api/admin/hour-programs/${id}`:"/api/admin/hour-programs",{
-        method:id?"PATCH":"POST",
-        body:JSON.stringify(payload)
-      });
+      if(id){
+        await api(`/api/admin/hour-programs/${id}`,{
+          method:"PATCH",
+          body:JSON.stringify({
+            name:elements.hourProgramName.value,
+            scope:hourProgramScope,
+            startsOn:elements.hourProgramStart.value,
+            endsOn:elements.hourProgramEnd.value,
+            entries:hourProgramDrafts.get(hourProgramScope)||[]
+          })
+        });
+      }else{
+        const drafts=filledHourProgramDrafts();
+        if(!drafts.length)throw new Error("Préparez au moins un onglet d’horaires.");
+        for(const draft of drafts){
+          await api("/api/admin/hour-programs",{
+            method:"POST",
+            body:JSON.stringify({
+              name:elements.hourProgramName.value,
+              scope:draft.scope,
+              startsOn:elements.hourProgramStart.value,
+              endsOn:elements.hourProgramEnd.value,
+              entries:draft.entries
+            })
+          });
+        }
+      }
       await refreshOperations();
       resetHourProgram();
-      setStatus(elements.hourProgramStatus,"Programmation enregistrée.","success");
+      setStatus(elements.hourProgramStatus,id?"Programmation enregistrée.":"Programmations enregistrées.","success");
     }catch(error){setStatus(elements.hourProgramStatus,error.message,"error");}
   });
   elements.deleteHourProgram.addEventListener("click",async()=>{
