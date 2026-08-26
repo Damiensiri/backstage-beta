@@ -45,6 +45,17 @@
     saveException:document.getElementById("saveExceptionBtn"),
     exceptionStatus:document.getElementById("exceptionStatus"),
     exceptionsList:document.getElementById("exceptionsList"),
+    hourProgramId:document.getElementById("hourProgramId"),
+    hourProgramName:document.getElementById("hourProgramName"),
+    hourProgramStart:document.getElementById("hourProgramStart"),
+    hourProgramEnd:document.getElementById("hourProgramEnd"),
+    hourProgramGrid:document.getElementById("hourProgramGrid"),
+    saveHourProgram:document.getElementById("saveHourProgramBtn"),
+    deleteHourProgram:document.getElementById("deleteHourProgramBtn"),
+    resetHourProgram:document.getElementById("resetHourProgramBtn"),
+    refreshHourPrograms:document.getElementById("refreshHourProgramsBtn"),
+    hourProgramStatus:document.getElementById("hourProgramStatus"),
+    hourProgramsList:document.getElementById("hourProgramsList"),
     homeAlertMessage:document.getElementById("homeAlertMessage"),
     homeAlertUrgent:document.getElementById("homeAlertUrgent"),
     saveHomeAlert:document.getElementById("saveHomeAlertBtn"),
@@ -52,6 +63,7 @@
   };
   let alerts=[];
   let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],homeAlert:{}};
+  let hourProgramScope="general";
   let publicStatuses=[];
   let liveRefreshTimer=null;
   const days=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
@@ -121,6 +133,10 @@
     element.className="status"+(type?" "+type:"");
   }
 
+  function esc(value){
+    return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]));
+  }
+
   async function loadAlerts(){
     setStatus(elements.connectionStatus,"Chargement…");
     try{
@@ -168,6 +184,8 @@
     renderSelectedSpace();
     renderScheduleInputs(elements.generalSchedules,operations.generalSchedules);
     renderExceptions();
+    renderHourProgramGrid();
+    renderHourProgramsList();
     elements.homeAlertMessage.value=operations.homeAlert?.message||"";
     elements.homeAlertUrgent.checked=operations.homeAlert?.urgent==="oui";
   }
@@ -322,6 +340,152 @@
         opensAt:container.querySelector(`[data-day="${day}"][data-kind="open"]`).value,
         closesAt:container.querySelector(`[data-day="${day}"][data-kind="close"]`).value
       };
+    });
+  }
+
+  function hourProgramTargets(scope=hourProgramScope){
+    if(scope==="general")return[{slug:"general",label:"Écuries"}];
+    const wanted=scope==="work"?["carriere","manege"]:["maison","grande","beudot"];
+    return operations.spaces.filter(space=>wanted.includes(space.slug))
+      .map(space=>({slug:space.slug,label:space.label}));
+  }
+
+  function baseHourProgramEntry(target,day){
+    const source=hourProgramScope==="general"
+      ?operations.generalSchedules.find(item=>Number(item.day)===day)
+      :operations.spaceSchedules.find(item=>item.space_slug===target.slug&&Number(item.day)===day);
+    const space=operations.spaces.find(item=>item.slug===target.slug)||{};
+    return{
+      targetSlug:target.slug,
+      day,
+      manualStatus:space.manual_status||"ouvert",
+      opensAt:source?.opens_at||"08:00",
+      closesAt:source?.closes_at||"21:00",
+      specialHours:space.special_hours||"",
+      info:space.info||"",
+      liberte:space.liberte||"non",
+      longe:space.longe||"non"
+    };
+  }
+
+  function renderHourProgramGrid(entries=[]){
+    if(!elements.hourProgramGrid)return;
+    const currentEntries=entries.length?entries:readHourProgramEntriesFromDom();
+    elements.hourProgramGrid.replaceChildren();
+    hourProgramTargets().forEach(target=>{
+      const card=document.createElement("article");
+      card.className="hour-program-target";
+      const title=document.createElement("h3");
+      title.textContent=target.label;
+      card.appendChild(title);
+      days.forEach((label,index)=>{
+        const day=index+1;
+        const row=currentEntries.find(item=>item.targetSlug===target.slug&&Number(item.day)===day)||baseHourProgramEntry(target,day);
+        const line=document.createElement("div");
+        line.className="hour-program-row";
+        line.dataset.target=target.slug;
+        line.dataset.day=String(day);
+        line.innerHTML=`
+          <strong>${label}</strong>
+          <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
+            <option value="ouvert">Auto / ouvert</option>
+            <option value="prevision">Prévu</option>
+            <option value="ferme">Fermé</option>
+            <option value="hors-service">Hors service</option>
+          </select>
+          <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
+          <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
+          <input data-field="specialHours" maxlength="120" value="${esc(row.specialHours)}" placeholder="Texte statut">
+          <input data-field="info" maxlength="500" value="${esc(row.info)}" placeholder="Info affichée">
+        `;
+        line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
+        if(hourProgramScope==="work"){
+          const options=document.createElement("div");
+          options.className="program-inline-options";
+          options.innerHTML=`
+            <label>Liberté <select data-field="liberte"><option value="non">Non</option><option value="oui">Oui</option></select></label>
+            <label>Longe <select data-field="longe"><option value="non">Non</option><option value="oui">Oui</option></select></label>
+          `;
+          options.querySelector('[data-field="liberte"]').value=row.liberte||"non";
+          options.querySelector('[data-field="longe"]').value=row.longe||"non";
+          line.appendChild(options);
+        }
+        card.appendChild(line);
+      });
+      elements.hourProgramGrid.appendChild(card);
+    });
+  }
+
+  function readHourProgramEntriesFromDom(){
+    if(!elements.hourProgramGrid?.children.length)return[];
+    return[...elements.hourProgramGrid.querySelectorAll(".hour-program-row")].map(row=>{
+      const value=field=>row.querySelector(`[data-field="${field}"]`)?.value||"";
+      return{
+        targetSlug:row.dataset.target,
+        day:Number(row.dataset.day),
+        manualStatus:value("manualStatus")||"ouvert",
+        opensAt:value("opensAt"),
+        closesAt:value("closesAt"),
+        specialHours:value("specialHours"),
+        info:value("info"),
+        liberte:value("liberte"),
+        longe:value("longe")
+      };
+    });
+  }
+
+  function resetHourProgram(){
+    elements.hourProgramId.value="";
+    elements.hourProgramName.value="";
+    elements.hourProgramStart.value="";
+    elements.hourProgramEnd.value="";
+    elements.deleteHourProgram.hidden=true;
+    renderHourProgramGrid([]);
+    setStatus(elements.hourProgramStatus,"");
+  }
+
+  function editHourProgram(program){
+    hourProgramScope=program.scope;
+    document.querySelectorAll("[data-hour-program-scope]").forEach(button=>{
+      button.classList.toggle("selected",button.dataset.hourProgramScope===hourProgramScope);
+    });
+    elements.hourProgramId.value=program.id;
+    elements.hourProgramName.value=program.name;
+    elements.hourProgramStart.value=program.startsOn;
+    elements.hourProgramEnd.value=program.endsOn||"";
+    elements.deleteHourProgram.hidden=false;
+    renderHourProgramGrid(program.entries||[]);
+    setStatus(elements.hourProgramStatus,`Programmation #${program.id} chargée.`);
+  }
+
+  function renderHourProgramsList(){
+    if(!elements.hourProgramsList)return;
+    elements.hourProgramsList.replaceChildren();
+    const programs=operations.hourPrograms||[];
+    if(!programs.length){
+      const empty=document.createElement("p");
+      empty.className="empty";
+      empty.textContent="Aucune programmation enregistrée.";
+      elements.hourProgramsList.appendChild(empty);
+      return;
+    }
+    programs.forEach(program=>{
+      const row=document.createElement("article");
+      row.className="hour-program-item";
+      const scopeLabel={general:"Écuries",work:"Travail",paddocks:"Paddocks"}[program.scope]||program.scope;
+      row.innerHTML=`
+        <div>
+          <strong>${esc(program.name)}</strong>
+          <p>${scopeLabel} · à partir du ${esc(program.startsOn)}${program.endsOn?` · jusqu’au ${esc(program.endsOn)}`:""} · ${program.entries.length} ligne(s)</p>
+        </div>
+      `;
+      const edit=document.createElement("button");
+      edit.type="button";
+      edit.className="secondary compact";
+      edit.textContent="Modifier";
+      edit.addEventListener("click",()=>editHourProgram(program));
+      row.appendChild(edit);
+      elements.hourProgramsList.appendChild(row);
     });
   }
 
@@ -640,6 +804,56 @@
       await refreshOperations();
       setStatus(elements.exceptionStatus,"Exception enregistrée.","success");
     }catch(error){setStatus(elements.exceptionStatus,error.message,"error");}
+  });
+
+  document.querySelectorAll("[data-hour-program-scope]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      hourProgramScope=button.dataset.hourProgramScope;
+      document.querySelectorAll("[data-hour-program-scope]").forEach(item=>item.classList.toggle("selected",item===button));
+      elements.hourProgramId.value="";
+      elements.deleteHourProgram.hidden=true;
+      renderHourProgramGrid([]);
+    });
+  });
+
+  elements.resetHourProgram.addEventListener("click",resetHourProgram);
+  elements.refreshHourPrograms.addEventListener("click",async()=>{
+    setStatus(elements.hourProgramStatus,"Actualisation…");
+    try{
+      await refreshOperations();
+      setStatus(elements.hourProgramStatus,"Programmations actualisées.","success");
+    }catch(error){setStatus(elements.hourProgramStatus,error.message,"error");}
+  });
+  elements.saveHourProgram.addEventListener("click",async()=>{
+    const id=elements.hourProgramId.value;
+    const payload={
+      name:elements.hourProgramName.value,
+      scope:hourProgramScope,
+      startsOn:elements.hourProgramStart.value,
+      endsOn:elements.hourProgramEnd.value,
+      entries:readHourProgramEntriesFromDom()
+    };
+    setStatus(elements.hourProgramStatus,"Enregistrement…");
+    try{
+      await api(id?`/api/admin/hour-programs/${id}`:"/api/admin/hour-programs",{
+        method:id?"PATCH":"POST",
+        body:JSON.stringify(payload)
+      });
+      await refreshOperations();
+      resetHourProgram();
+      setStatus(elements.hourProgramStatus,"Programmation enregistrée.","success");
+    }catch(error){setStatus(elements.hourProgramStatus,error.message,"error");}
+  });
+  elements.deleteHourProgram.addEventListener("click",async()=>{
+    const id=elements.hourProgramId.value;
+    if(!id||!window.confirm("Supprimer cette programmation ?"))return;
+    setStatus(elements.hourProgramStatus,"Suppression…");
+    try{
+      await api(`/api/admin/hour-programs/${id}`,{method:"DELETE"});
+      await refreshOperations();
+      resetHourProgram();
+      setStatus(elements.hourProgramStatus,"Programmation supprimée.","success");
+    }catch(error){setStatus(elements.hourProgramStatus,error.message,"error");}
   });
 
   elements.saveHomeAlert.addEventListener("click",async()=>{

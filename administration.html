@@ -6,7 +6,7 @@
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/administration.css?v=20260825-2">
+  <link rel="stylesheet" href="assets/css/administration.css?v=20260826-1">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -123,6 +123,43 @@
 
   <section class="admin-section" data-admin-section="general" hidden>
     <div class="panel">
+      <div class="panel-heading">
+        <h2>Programmation horaires</h2>
+        <button id="resetHourProgramBtn" class="secondary" type="button">Nouvelle</button>
+      </div>
+      <p class="section-help">Préparez une grille qui prendra automatiquement le relais à partir d’une date précise. Les horaires actuels restent conservés.</p>
+      <input id="hourProgramId" type="hidden">
+      <label>Nom
+        <input id="hourProgramName" maxlength="120" placeholder="Ex. Horaires hiver, semaine concours…">
+      </label>
+      <div class="two-columns">
+        <label>Début d’application
+          <input id="hourProgramStart" type="date">
+        </label>
+        <label>Fin optionnelle
+          <input id="hourProgramEnd" type="date">
+        </label>
+      </div>
+      <div class="program-tabs" role="tablist" aria-label="Type de programmation">
+        <button class="selected" type="button" data-hour-program-scope="general">Écuries</button>
+        <button type="button" data-hour-program-scope="work">Travail</button>
+        <button type="button" data-hour-program-scope="paddocks">Paddocks</button>
+      </div>
+      <div id="hourProgramGrid" class="hour-program-grid"></div>
+      <div class="form-actions">
+        <button id="saveHourProgramBtn" type="button">Enregistrer la programmation</button>
+        <button id="deleteHourProgramBtn" class="danger" type="button" hidden>Supprimer</button>
+      </div>
+      <p id="hourProgramStatus" class="status" role="status"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-heading">
+        <h2>Programmations enregistrées</h2>
+        <button id="refreshHourProgramsBtn" class="secondary" type="button">Actualiser</button>
+      </div>
+      <div id="hourProgramsList" class="hour-program-list"></div>
+    </div>
+    <div class="panel">
       <h2>Horaires généraux des écuries</h2>
       <p class="section-help">Utilisés uniquement par le bandeau de l’index et la page Horaires.</p>
       <div id="generalSchedules" class="schedule-grid"></div>
@@ -182,7 +219,7 @@
 </main>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="assets/js/notification-format.js?v=20260716-2"></script>
-<script src="assets/js/administration.js?v=20260825-1"></script>
+<script src="assets/js/administration.js?v=20260826-1"></script>
 <script src="assets/js/backstage-push.js?v=20260716-2"></script>
 <script src="assets/js/status-realtime.js?v=20260716-2"></script>
 <script src="assets/js/backstage-shell.js?v=20260719-2"></script>
