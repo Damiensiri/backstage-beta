@@ -49,6 +49,11 @@
     hourProgramName:document.getElementById("hourProgramName"),
     hourProgramStart:document.getElementById("hourProgramStart"),
     hourProgramEnd:document.getElementById("hourProgramEnd"),
+    hourProgramBulkOpen:document.getElementById("hourProgramBulkOpen"),
+    hourProgramBulkClose:document.getElementById("hourProgramBulkClose"),
+    hourProgramBulkStatusWrap:document.getElementById("hourProgramBulkStatusWrap"),
+    hourProgramBulkStatus:document.getElementById("hourProgramBulkStatus"),
+    applyHourProgramBulk:document.getElementById("applyHourProgramBulkBtn"),
     hourProgramGrid:document.getElementById("hourProgramGrid"),
     applyAllPaddockHours:document.getElementById("applyAllPaddockHoursBtn"),
     saveHourProgram:document.getElementById("saveHourProgramBtn"),
@@ -373,6 +378,7 @@
   function renderHourProgramGrid(entries=[]){
     if(!elements.hourProgramGrid)return;
     if(elements.applyAllPaddockHours)elements.applyAllPaddockHours.hidden=hourProgramScope!=="paddocks";
+    if(elements.hourProgramBulkStatusWrap)elements.hourProgramBulkStatusWrap.hidden=hourProgramScope!=="paddocks";
     const currentEntries=entries.length?entries:(hourProgramDrafts.get(hourProgramScope)||[]);
     elements.hourProgramGrid.replaceChildren();
     hourProgramTargets().forEach(target=>{
@@ -389,6 +395,9 @@
         line.dataset.target=target.slug;
         line.dataset.day=String(day);
         const commonHours=`
+          <label class="program-day-check" aria-label="Sélectionner ${target.label} ${label}">
+            <input data-field="selected" type="checkbox">
+          </label>
           <strong>${label}</strong>
           <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
           <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
@@ -397,12 +406,18 @@
           line.innerHTML=commonHours;
         }else if(hourProgramScope==="work"){
           line.innerHTML=`
+            <label class="program-day-check" aria-label="Sélectionner ${target.label} ${label}">
+              <input data-field="selected" type="checkbox">
+            </label>
             <strong>${label}</strong>
             <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
             <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
           `;
         }else{
           line.innerHTML=`
+            <label class="program-day-check" aria-label="Sélectionner ${target.label} ${label}">
+              <input data-field="selected" type="checkbox">
+            </label>
             <strong>${label}</strong>
             <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
               <option value="ouvert">Ouvert</option>
@@ -477,6 +492,36 @@
       });
     });
     setStatus(elements.hourProgramStatus,"Grille du premier paddock appliquée aux 3 paddocks.","success");
+  }
+
+  function applyBulkHourProgram(){
+    if(!elements.hourProgramGrid)return;
+    const selectedRows=[...elements.hourProgramGrid.querySelectorAll('.hour-program-row input[data-field="selected"]:checked')]
+      .map(input=>input.closest(".hour-program-row"))
+      .filter(Boolean);
+    if(!selectedRows.length){
+      setStatus(elements.hourProgramStatus,"Sélectionnez au moins un jour dans la grille.","error");
+      return;
+    }
+    const opensAt=elements.hourProgramBulkOpen?.value||"";
+    const closesAt=elements.hourProgramBulkClose?.value||"";
+    const manualStatus=elements.hourProgramBulkStatus?.value||"";
+    if(!opensAt&&!closesAt&&!manualStatus){
+      setStatus(elements.hourProgramStatus,"Indiquez au moins une valeur à appliquer.","error");
+      return;
+    }
+    selectedRows.forEach(row=>{
+      const open=row.querySelector('[data-field="opensAt"]');
+      const close=row.querySelector('[data-field="closesAt"]');
+      const status=row.querySelector('[data-field="manualStatus"]');
+      if(opensAt&&open)open.value=opensAt;
+      if(closesAt&&close)close.value=closesAt;
+      if(manualStatus&&status)status.value=manualStatus;
+      const selected=row.querySelector('[data-field="selected"]');
+      if(selected)selected.checked=false;
+    });
+    rememberHourProgramDraft();
+    setStatus(elements.hourProgramStatus,`${selectedRows.length} jour(s) mis à jour dans l’onglet affiché.`,"success");
   }
 
   function resetHourProgram(){
@@ -869,6 +914,7 @@
 
   elements.resetHourProgram.addEventListener("click",resetHourProgram);
   elements.applyAllPaddockHours?.addEventListener("click",applyFirstPaddockProgramToAll);
+  elements.applyHourProgramBulk?.addEventListener("click",applyBulkHourProgram);
   elements.refreshHourPrograms.addEventListener("click",async()=>{
     setStatus(elements.hourProgramStatus,"Actualisation…");
     try{
