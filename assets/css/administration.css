@@ -293,3 +293,43 @@ body.admin-section-spaces .space-editor-sheet{border-radius:28px}
   body.admin-section-spaces .space-editor-sheet{border-radius:26px 26px 0 0}
   body.admin-section-spaces .space-editor-sheet .panel{padding:18px}
 }
+
+@media(max-width:640px){
+  .activity-program-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .activity-program-target,
+  .activity-program-group{
+    min-width:0;
+    overflow:hidden;
+  }
+  .activity-program-row{
+    grid-template-columns:minmax(82px,1fr) 86px;
+    gap:7px;
+    padding:9px;
+  }
+  .activity-program-row strong{
+    align-self:center;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .activity-program-row span{
+    display:none;
+  }
+  .activity-program-row select{
+    width:86px;
+    min-width:0;
+  }
+  .activity-program-row input{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+  .activity-program-row input[data-field="startsAt"]{
+    grid-column:1;
+  }
+  .activity-program-row input[data-field="endsAt"]{
+    grid-column:2;
+  }
+}
