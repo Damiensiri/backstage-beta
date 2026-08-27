@@ -6,7 +6,7 @@
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-5">
+  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-6">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -21,7 +21,7 @@
   </header>
 
   <div data-admin-section="notifications" hidden>
-  <details class="panel collapsible-panel" open aria-labelledby="formTitle">
+  <details class="panel collapsible-panel" aria-labelledby="formTitle">
     <summary class="panel-heading">
       <span id="formTitle" class="panel-title">Nouvelle alerte</span>
       <button id="cancelEditBtn" class="secondary" type="button" hidden>Annuler</button>
@@ -84,7 +84,7 @@
   </div>
 
   <section class="admin-section" data-admin-section="spaces">
-    <details class="panel collapsible-panel spaces-overview" open>
+    <details class="panel collapsible-panel spaces-overview">
       <summary class="panel-heading">
         <span class="panel-title">Espaces</span>
         <button id="refreshSpacesBtn" class="secondary" type="button">Actualiser</button>
@@ -95,7 +95,7 @@
     </details>
     <div id="spaceEditor" class="space-editor-overlay" hidden>
     <div class="space-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="spaceEditorTitle">
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary class="panel-heading">
         <span id="spaceEditorTitle" class="panel-title">Modifier l’espace</span>
         <button id="closeSpaceEditorBtn" class="secondary" type="button">Fermer</button>
@@ -122,7 +122,7 @@
   </section>
 
   <section class="admin-section" data-admin-section="general" hidden>
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary class="panel-heading">
         <span class="panel-title">Programmation horaires</span>
         <button id="resetHourProgramBtn" class="secondary" type="button">Nouvelle</button>
@@ -170,7 +170,7 @@
       </div>
       <p id="hourProgramStatus" class="status" role="status"></p>
     </details>
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary class="panel-heading">
         <span class="panel-title">Options activités</span>
         <button id="resetActivityProgramBtn" class="secondary" type="button">Nouvelle</button>
@@ -214,7 +214,7 @@
       <button id="saveGeneralSchedulesBtn" type="button">Enregistrer les horaires des écuries</button>
       <p id="generalSchedulesStatus" class="status" role="status"></p>
     </details>
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary><span class="panel-title">Exception ponctuelle horaires</span></summary>
       <p class="section-help">Remplace l’horaire d’un seul jour, sans modifier la programmation de fond.</p>
       <div class="two-columns">
@@ -254,7 +254,7 @@
       <summary><span class="panel-title">Exceptions horaires enregistrées</span></summary>
       <div id="hourExceptionsList" class="exceptions-list"></div>
     </details>
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary><span class="panel-title">Message exceptionnel page Horaires</span></summary>
       <p class="section-help">Texte ponctuel affiché sur la page Horaires, par exemple “Fermeture exceptionnelle”.</p>
       <label>Date
@@ -273,7 +273,7 @@
   </section>
 
   <section class="admin-section" data-admin-section="home-alert" hidden>
-    <details class="panel collapsible-panel" open>
+    <details class="panel collapsible-panel">
       <summary><span class="panel-title">Alerte affichée sur l’index</span></summary>
       <label>Texte de l’alerte
         <textarea id="homeAlertMessage" maxlength="500" rows="4" placeholder="Laisser vide pour masquer le bandeau"></textarea>
@@ -285,7 +285,7 @@
   </section>
 
   <section id="settingsPanel" class="admin-section" data-admin-section="settings" aria-labelledby="connectionTitle" hidden>
-    <details class="panel collapsible-panel connection-panel" open>
+    <details class="panel collapsible-panel connection-panel">
       <summary><span id="connectionTitle" class="panel-title">Connexion au backend bêta</span></summary>
       <p class="section-help">Ces réglages restent mémorisés uniquement sur cet appareil.</p>
       <label>Adresse de l’API
@@ -298,7 +298,7 @@
       <button id="forgetTokenBtn" class="secondary forget-button" type="button">Oublier le jeton</button>
       <p id="connectionStatus" class="status" role="status"></p>
     </details>
-    <details class="panel collapsible-panel connection-panel" open aria-labelledby="pushSettingsTitle">
+    <details class="panel collapsible-panel connection-panel" aria-labelledby="pushSettingsTitle">
       <summary><span id="pushSettingsTitle" class="panel-title">Notifications du Backstage</span></summary>
       <p class="section-help">Recevez immédiatement les nouvelles réservations, annulations, demandes, commandes et inscriptions.</p>
       <button id="enablePushBtn" class="push-settings-button" type="button">Activer les notifications</button>
@@ -308,7 +308,7 @@
 </main>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="assets/js/notification-format.js?v=20260716-2"></script>
-<script src="assets/js/administration.js?v=20260827-5"></script>
+<script src="assets/js/administration.js?v=20260827-6"></script>
 <script src="assets/js/backstage-push.js?v=20260716-2"></script>
 <script src="assets/js/status-realtime.js?v=20260716-2"></script>
 <script src="assets/js/backstage-shell.js?v=20260719-2"></script>
