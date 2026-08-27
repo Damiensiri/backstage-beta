@@ -21,6 +21,9 @@ button{cursor:pointer}
 
 .panel{margin:16px 0;padding:18px;border:1px solid #ffffff30;border-radius:24px;background:#102d45d9;box-shadow:0 18px 48px #00101f4d;backdrop-filter:blur(18px)}
 .panel h2{font-size:19px;margin:0 0 16px}
+.technical-fallback summary{cursor:pointer;font-size:15px;font-weight:850;color:#b9d6e6}
+.technical-fallback:not([open]){background:#071b2b66}
+.technical-fallback:not([open])>*:not(summary){display:none}
 .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .panel-heading h2{margin:0}
 label{display:block;margin:13px 0 6px;color:#d8e9f4;font-size:13px;font-weight:700}
@@ -115,6 +118,7 @@ body.space-editor-open{overflow:hidden}
 .space-editor-sheet .panel{margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
 .space-editor-sheet .panel+.panel{border-top:1px solid #ffffff24}
 .two-columns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .schedule-grid{display:grid;gap:8px;margin-bottom:14px}
 .schedule-row{display:grid;grid-template-columns:minmax(84px,1fr) 105px 105px;align-items:center;gap:8px;padding:9px;border-radius:14px;background:#071b2b80}
 .schedule-row strong{font-size:12px;color:#d8e9f4}
@@ -171,6 +175,7 @@ button.compact{width:auto;padding:8px 10px;font-size:11px}
   .hour-program-row.is-paddocks input[data-field="closesAt"]{grid-column:4}
   .program-inline-options{margin-left:78px}
   .hour-program-item{align-items:flex-start;flex-direction:column}
+  .three-columns{grid-template-columns:1fr}
 }
 
 /* Pilote UX 2026-07-28 : administration compacte, logique inchangée. */

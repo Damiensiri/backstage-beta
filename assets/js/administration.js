@@ -62,13 +62,22 @@
     refreshHourPrograms:document.getElementById("refreshHourProgramsBtn"),
     hourProgramStatus:document.getElementById("hourProgramStatus"),
     hourProgramsList:document.getElementById("hourProgramsList"),
+    hourExceptionDate:document.getElementById("hourExceptionDate"),
+    hourExceptionScope:document.getElementById("hourExceptionScope"),
+    hourExceptionTarget:document.getElementById("hourExceptionTarget"),
+    hourExceptionStatusSelect:document.getElementById("hourExceptionStatus"),
+    hourExceptionOpen:document.getElementById("hourExceptionOpen"),
+    hourExceptionClose:document.getElementById("hourExceptionClose"),
+    saveHourException:document.getElementById("saveHourExceptionBtn"),
+    hourExceptionStatusMessage:document.getElementById("hourExceptionStatusMessage"),
+    hourExceptionsList:document.getElementById("hourExceptionsList"),
     homeAlertMessage:document.getElementById("homeAlertMessage"),
     homeAlertUrgent:document.getElementById("homeAlertUrgent"),
     saveHomeAlert:document.getElementById("saveHomeAlertBtn"),
     homeAlertStatus:document.getElementById("homeAlertStatus")
   };
   let alerts=[];
-  let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],homeAlert:{}};
+  let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],hourExceptions:[],homeAlert:{}};
   let hourProgramScope="general";
   let hourProgramDrafts=new Map();
   let publicStatuses=[];
@@ -190,6 +199,8 @@
     renderSpacePills();
     renderSelectedSpace();
     renderScheduleInputs(elements.generalSchedules,operations.generalSchedules);
+    renderHourExceptionTargets();
+    renderHourExceptions();
     renderExceptions();
     renderHourProgramGrid();
     renderHourProgramsList();
@@ -362,6 +373,31 @@
     const wanted=["carriere","manege"];
     return operations.spaces.filter(space=>wanted.includes(space.slug))
       .map(space=>({slug:space.slug,label:space.label}));
+  }
+
+  function hourExceptionTargets(scope=elements.hourExceptionScope?.value||"general"){
+    if(scope==="general")return[{slug:"general",label:"Écuries"}];
+    if(scope==="paddocks")return[
+      {slug:"maison",label:"Maison"},
+      {slug:"grande",label:"Grande voie"},
+      {slug:"beudot",label:"Beudot"}
+    ];
+    return operations.spaces
+      .filter(space=>["carriere","manege"].includes(space.slug))
+      .map(space=>({slug:space.slug,label:space.label}));
+  }
+
+  function renderHourExceptionTargets(){
+    if(!elements.hourExceptionTarget)return;
+    const current=elements.hourExceptionTarget.value;
+    const targets=hourExceptionTargets();
+    elements.hourExceptionTarget.replaceChildren(...targets.map(target=>{
+      const option=document.createElement("option");
+      option.value=target.slug;
+      option.textContent=target.label;
+      return option;
+    }));
+    if(targets.some(target=>target.slug===current))elements.hourExceptionTarget.value=current;
   }
 
   function baseHourProgramEntry(target,day){
@@ -616,6 +652,39 @@
     });
   }
 
+  function renderHourExceptions(){
+    if(!elements.hourExceptionsList)return;
+    elements.hourExceptionsList.replaceChildren();
+    const list=operations.hourExceptions||[];
+    if(!list.length){
+      const empty=document.createElement("p");
+      empty.className="empty";
+      empty.textContent="Aucune exception horaire enregistrée.";
+      elements.hourExceptionsList.appendChild(empty);
+      return;
+    }
+    list.forEach(item=>{
+      const row=document.createElement("article");
+      row.className="exception-item";
+      const scopeLabel={general:"Écuries",work:"Travail",paddocks:"Paddock"}[item.scope]||item.scope;
+      const targetLabel=hourExceptionTargets(item.scope).find(target=>target.slug===item.targetSlug)?.label||item.targetSlug;
+      const statusLabel={ouvert:"Ouvert",ferme:"Fermé","hors-service":"Hors service"}[item.manualStatus]||item.manualStatus;
+      const text=document.createElement("div");
+      const title=document.createElement("strong");
+      title.textContent=`${item.date} · ${scopeLabel} · ${targetLabel}`;
+      const message=document.createElement("p");
+      message.textContent=`${statusLabel} · ${item.opensAt}–${item.closesAt}`;
+      text.append(title,message);
+      const remove=document.createElement("button");
+      remove.type="button";
+      remove.className="danger compact";
+      remove.textContent="Supprimer";
+      remove.addEventListener("click",()=>deleteHourException(item));
+      row.append(text,remove);
+      elements.hourExceptionsList.appendChild(row);
+    });
+  }
+
   async function refreshOperations(){
     const config=settings();
     [operations,publicStatuses]=await Promise.all([
@@ -642,6 +711,15 @@
       await refreshOperations();
       setStatus(elements.exceptionStatus,"Exception supprimée.","success");
     }catch(error){setStatus(elements.exceptionStatus,error.message,"error");}
+  }
+
+  async function deleteHourException(item){
+    if(!window.confirm(`Supprimer l’exception horaire du ${item.date} ?`))return;
+    try{
+      await api(`/api/admin/hour-exceptions/${item.id}`,{method:"DELETE"});
+      await refreshOperations();
+      setStatus(elements.hourExceptionStatusMessage,"Exception horaire supprimée.","success");
+    }catch(error){setStatus(elements.hourExceptionStatusMessage,error.message,"error");}
   }
 
   function render(){
@@ -903,6 +981,26 @@
       await refreshOperations();
       setStatus(elements.exceptionStatus,"Exception enregistrée.","success");
     }catch(error){setStatus(elements.exceptionStatus,error.message,"error");}
+  });
+
+  elements.hourExceptionScope?.addEventListener("change",renderHourExceptionTargets);
+  elements.saveHourException?.addEventListener("click",async()=>{
+    setStatus(elements.hourExceptionStatusMessage,"Enregistrement…");
+    try{
+      await api("/api/admin/hour-exceptions",{
+        method:"POST",
+        body:JSON.stringify({
+          date:elements.hourExceptionDate.value,
+          scope:elements.hourExceptionScope.value,
+          targetSlug:elements.hourExceptionTarget.value,
+          manualStatus:elements.hourExceptionStatusSelect.value,
+          opensAt:elements.hourExceptionOpen.value,
+          closesAt:elements.hourExceptionClose.value
+        })
+      });
+      await refreshOperations();
+      setStatus(elements.hourExceptionStatusMessage,"Exception horaire enregistrée.","success");
+    }catch(error){setStatus(elements.hourExceptionStatusMessage,error.message,"error");}
   });
 
   document.querySelectorAll("[data-hour-program-scope]").forEach(button=>{
