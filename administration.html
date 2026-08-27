@@ -6,7 +6,7 @@
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-2">
+  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-3">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -172,6 +172,36 @@
     </details>
     <details class="panel collapsible-panel" open>
       <summary class="panel-heading">
+        <span class="panel-title">Options activités</span>
+        <button id="resetActivityProgramBtn" class="secondary" type="button">Nouvelle</button>
+      </summary>
+      <p class="section-help">Programmation rare de Liberté et Longe pour Carrière et Manège. Si l’espace est fermé ou hors service, l’activité sera toujours forcée à NON côté PWA.</p>
+      <input id="activityProgramId" type="hidden">
+      <label>Nom
+        <input id="activityProgramName" maxlength="120" placeholder="Ex. Options rentrée, semaine spéciale…">
+      </label>
+      <div class="two-columns">
+        <label>Début d’application
+          <input id="activityProgramStart" type="date">
+        </label>
+        <label>Fin optionnelle
+          <input id="activityProgramEnd" type="date">
+        </label>
+      </div>
+      <label class="check"><input id="activityProgramEnabled" type="checkbox"> Activer cette programmation d’activités</label>
+      <div id="activityProgramGrid" class="activity-program-grid"></div>
+      <div class="form-actions">
+        <button id="saveActivityProgramBtn" type="button">Enregistrer les options</button>
+        <button id="deleteActivityProgramBtn" class="danger" type="button" hidden>Supprimer</button>
+      </div>
+      <p id="activityProgramStatus" class="status" role="status"></p>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Options enregistrées</span></summary>
+      <div id="activityProgramsList" class="hour-program-list"></div>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary class="panel-heading">
         <span class="panel-title">Programmations enregistrées</span>
         <button id="refreshHourProgramsBtn" class="secondary" type="button">Actualiser</button>
       </summary>
@@ -278,7 +308,7 @@
 </main>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="assets/js/notification-format.js?v=20260716-2"></script>
-<script src="assets/js/administration.js?v=20260827-2"></script>
+<script src="assets/js/administration.js?v=20260827-3"></script>
 <script src="assets/js/backstage-push.js?v=20260716-2"></script>
 <script src="assets/js/status-realtime.js?v=20260716-2"></script>
 <script src="assets/js/backstage-shell.js?v=20260719-2"></script>

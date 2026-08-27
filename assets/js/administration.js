@@ -62,6 +62,17 @@
     refreshHourPrograms:document.getElementById("refreshHourProgramsBtn"),
     hourProgramStatus:document.getElementById("hourProgramStatus"),
     hourProgramsList:document.getElementById("hourProgramsList"),
+    activityProgramId:document.getElementById("activityProgramId"),
+    activityProgramName:document.getElementById("activityProgramName"),
+    activityProgramStart:document.getElementById("activityProgramStart"),
+    activityProgramEnd:document.getElementById("activityProgramEnd"),
+    activityProgramEnabled:document.getElementById("activityProgramEnabled"),
+    activityProgramGrid:document.getElementById("activityProgramGrid"),
+    saveActivityProgram:document.getElementById("saveActivityProgramBtn"),
+    deleteActivityProgram:document.getElementById("deleteActivityProgramBtn"),
+    resetActivityProgram:document.getElementById("resetActivityProgramBtn"),
+    activityProgramStatus:document.getElementById("activityProgramStatus"),
+    activityProgramsList:document.getElementById("activityProgramsList"),
     hourExceptionDate:document.getElementById("hourExceptionDate"),
     hourExceptionScope:document.getElementById("hourExceptionScope"),
     hourExceptionTarget:document.getElementById("hourExceptionTarget"),
@@ -77,7 +88,7 @@
     homeAlertStatus:document.getElementById("homeAlertStatus")
   };
   let alerts=[];
-  let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],hourExceptions:[],homeAlert:{}};
+  let operations={spaces:[],spaceSchedules:[],generalSchedules:[],exceptions:[],hourExceptions:[],homeAlert:{},activityPrograms:[]};
   let hourProgramScope="general";
   let hourProgramDrafts=new Map();
   let publicStatuses=[];
@@ -204,6 +215,8 @@
     renderExceptions();
     renderHourProgramGrid();
     renderHourProgramsList();
+    renderActivityProgramGrid();
+    renderActivityProgramsList();
     elements.homeAlertMessage.value=operations.homeAlert?.message||"";
     elements.homeAlertUrgent.checked=operations.homeAlert?.urgent==="oui";
   }
@@ -275,15 +288,28 @@
     const name=document.createElement("span");
     name.textContent=label;
     wrapper.appendChild(name);
-    ["oui","non"].forEach(value=>{
+    const hasAuto=hasActivityProgramFor(space.slug,field);
+    ["auto","oui","non"].forEach(value=>{
       const button=document.createElement("button");
       button.type="button";
-      button.textContent=value.toUpperCase();
+      button.textContent=value==="auto"?"Auto":value.toUpperCase();
       button.classList.toggle("selected",space[field]===value);
+      if(value==="auto"&&!hasAuto){
+        button.disabled=true;
+        button.title="Aucune programmation d’activité active";
+      }
       button.addEventListener("click",()=>quickSaveSpace(space,{[field]:value}));
       wrapper.appendChild(button);
     });
     return wrapper;
+  }
+
+  function hasActivityProgramFor(spaceSlug,activity){
+    return (operations.activityPrograms||[]).some(program=>
+      program.enabled==="oui"&&(program.entries||[]).some(entry=>
+        entry.spaceSlug===spaceSlug&&entry.activity===activity
+      )
+    );
   }
 
   async function quickSaveSpace(space,changes){
@@ -621,6 +647,117 @@
       edit.addEventListener("click",()=>editHourProgram(program));
       row.appendChild(edit);
       elements.hourProgramsList.appendChild(row);
+    });
+  }
+
+  function baseActivityEntry(spaceSlug,day,activity){
+    return{spaceSlug,day,activity,enabled:"non",startsAt:"",endsAt:""};
+  }
+
+  function renderActivityProgramGrid(entries=[]){
+    if(!elements.activityProgramGrid)return;
+    const current=entries.length?entries:[];
+    elements.activityProgramGrid.replaceChildren();
+    ["carriere","manege"].forEach(spaceSlug=>{
+      const space=operations.spaces.find(item=>item.slug===spaceSlug);
+      const card=document.createElement("article");
+      card.className="hour-program-target activity-program-target";
+      const title=document.createElement("h3");
+      title.textContent=space?.label||spaceSlug;
+      card.appendChild(title);
+      days.forEach((label,index)=>{
+        const day=index+1;
+        ["liberte","longe"].forEach(activity=>{
+          const row=current.find(item=>item.spaceSlug===spaceSlug&&Number(item.day)===day&&item.activity===activity)||baseActivityEntry(spaceSlug,day,activity);
+          const line=document.createElement("div");
+          line.className="activity-program-row";
+          line.dataset.space=spaceSlug;
+          line.dataset.day=String(day);
+          line.dataset.activity=activity;
+          line.innerHTML=`
+            <strong>${label}</strong>
+            <span>${activity==="liberte"?"Liberté":"Longe"}</span>
+            <select data-field="enabled" aria-label="${activity} ${label}">
+              <option value="non">NON</option>
+              <option value="oui">OUI</option>
+            </select>
+            <input data-field="startsAt" type="time" value="${esc(row.startsAt)}" aria-label="Début ${activity} ${label}">
+            <input data-field="endsAt" type="time" value="${esc(row.endsAt)}" aria-label="Fin ${activity} ${label}">
+          `;
+          line.querySelector('[data-field="enabled"]').value=row.enabled||"non";
+          card.appendChild(line);
+        });
+      });
+      elements.activityProgramGrid.appendChild(card);
+    });
+  }
+
+  function readActivityProgramEntries(){
+    if(!elements.activityProgramGrid)return[];
+    return[...elements.activityProgramGrid.querySelectorAll(".activity-program-row")].map(row=>{
+      const value=field=>row.querySelector(`[data-field="${field}"]`)?.value||"";
+      return{
+        spaceSlug:row.dataset.space,
+        day:Number(row.dataset.day),
+        activity:row.dataset.activity,
+        enabled:value("enabled")||"non",
+        startsAt:value("startsAt"),
+        endsAt:value("endsAt")
+      };
+    });
+  }
+
+  function resetActivityProgram(){
+    if(!elements.activityProgramId)return;
+    elements.activityProgramId.value="";
+    elements.activityProgramName.value="";
+    elements.activityProgramStart.value="";
+    elements.activityProgramEnd.value="";
+    elements.activityProgramEnabled.checked=false;
+    elements.deleteActivityProgram.hidden=true;
+    renderActivityProgramGrid();
+    setStatus(elements.activityProgramStatus,"");
+  }
+
+  function editActivityProgram(program){
+    elements.activityProgramId.value=program.id;
+    elements.activityProgramName.value=program.name;
+    elements.activityProgramStart.value=program.startsOn;
+    elements.activityProgramEnd.value=program.endsOn||"";
+    elements.activityProgramEnabled.checked=program.enabled==="oui";
+    elements.deleteActivityProgram.hidden=false;
+    renderActivityProgramGrid(program.entries||[]);
+    setStatus(elements.activityProgramStatus,`Options #${program.id} chargées.`);
+  }
+
+  function renderActivityProgramsList(){
+    if(!elements.activityProgramsList)return;
+    elements.activityProgramsList.replaceChildren();
+    const programs=operations.activityPrograms||[];
+    if(!programs.length){
+      const empty=document.createElement("p");
+      empty.className="empty";
+      empty.textContent="Aucune option programmée.";
+      elements.activityProgramsList.appendChild(empty);
+      return;
+    }
+    programs.forEach(program=>{
+      const row=document.createElement("article");
+      row.className="hour-program-item";
+      const active=program.enabled==="oui"?"active":"inactive";
+      row.innerHTML=`
+        <div>
+          <strong>${esc(program.name)}</strong>
+          <p>Options · ${active} · à partir du ${esc(program.startsOn)}${program.endsOn?` · jusqu’au ${esc(program.endsOn)}`:""} · ${program.entries.length} ligne(s)</p>
+        </div>
+      `;
+      const edit=document.createElement("button");
+      edit.type="button";
+      edit.className="secondary compact";
+      edit.textContent="Modifier";
+      edit.addEventListener("click",()=>editActivityProgram(program));
+      row.appendChild(edit);
+      elements.activityProgramsList.appendChild(row);
     });
   }
 
@@ -1074,6 +1211,40 @@
       resetHourProgram();
       setStatus(elements.hourProgramStatus,"Programmation supprimée.","success");
     }catch(error){setStatus(elements.hourProgramStatus,error.message,"error");}
+  });
+
+  elements.resetActivityProgram?.addEventListener("click",resetActivityProgram);
+  elements.saveActivityProgram?.addEventListener("click",async()=>{
+    const id=elements.activityProgramId.value;
+    setStatus(elements.activityProgramStatus,"Enregistrement…");
+    try{
+      const payload={
+        name:elements.activityProgramName.value,
+        startsOn:elements.activityProgramStart.value,
+        endsOn:elements.activityProgramEnd.value,
+        enabled:elements.activityProgramEnabled.checked?"oui":"non",
+        entries:readActivityProgramEntries()
+      };
+      if(id){
+        await api(`/api/admin/activity-programs/${id}`,{method:"PATCH",body:JSON.stringify(payload)});
+      }else{
+        await api("/api/admin/activity-programs",{method:"POST",body:JSON.stringify(payload)});
+      }
+      await refreshOperations();
+      resetActivityProgram();
+      setStatus(elements.activityProgramStatus,id?"Options enregistrées.":"Options programmées.","success");
+    }catch(error){setStatus(elements.activityProgramStatus,error.message,"error");}
+  });
+  elements.deleteActivityProgram?.addEventListener("click",async()=>{
+    const id=elements.activityProgramId.value;
+    if(!id||!window.confirm("Supprimer cette programmation d’activités ?"))return;
+    setStatus(elements.activityProgramStatus,"Suppression…");
+    try{
+      await api(`/api/admin/activity-programs/${id}`,{method:"DELETE"});
+      await refreshOperations();
+      resetActivityProgram();
+      setStatus(elements.activityProgramStatus,"Options supprimées.","success");
+    }catch(error){setStatus(elements.activityProgramStatus,error.message,"error");}
   });
 
   elements.saveHomeAlert.addEventListener("click",async()=>{
