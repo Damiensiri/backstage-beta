@@ -665,9 +665,14 @@
       const title=document.createElement("h3");
       title.textContent=space?.label||spaceSlug;
       card.appendChild(title);
-      days.forEach((label,index)=>{
-        const day=index+1;
-        ["liberte","longe"].forEach(activity=>{
+      ["liberte","longe"].forEach(activity=>{
+        const group=document.createElement("section");
+        group.className="activity-program-group";
+        const heading=document.createElement("h4");
+        heading.textContent=activity==="liberte"?"Liberté":"Longe";
+        group.appendChild(heading);
+        days.forEach((label,index)=>{
+          const day=index+1;
           const row=current.find(item=>item.spaceSlug===spaceSlug&&Number(item.day)===day&&item.activity===activity)||baseActivityEntry(spaceSlug,day,activity);
           const line=document.createElement("div");
           line.className="activity-program-row";
@@ -685,8 +690,9 @@
             <input data-field="endsAt" type="time" value="${esc(row.endsAt)}" aria-label="Fin ${activity} ${label}">
           `;
           line.querySelector('[data-field="enabled"]').value=row.enabled||"non";
-          card.appendChild(line);
+          group.appendChild(line);
         });
+        card.appendChild(group);
       });
       elements.activityProgramGrid.appendChild(card);
     });
