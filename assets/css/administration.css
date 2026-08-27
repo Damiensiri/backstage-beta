@@ -21,9 +21,16 @@ button{cursor:pointer}
 
 .panel{margin:16px 0;padding:18px;border:1px solid #ffffff30;border-radius:24px;background:#102d45d9;box-shadow:0 18px 48px #00101f4d;backdrop-filter:blur(18px)}
 .panel h2{font-size:19px;margin:0 0 16px}
-.technical-fallback summary{cursor:pointer;font-size:15px;font-weight:850;color:#b9d6e6}
-.technical-fallback:not([open]){background:#071b2b66}
-.technical-fallback:not([open])>*:not(summary){display:none}
+.panel-title{font-size:19px;font-weight:850;color:#f6fbff}
+.collapsible-panel>summary,.technical-fallback summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-2px 0 14px;cursor:pointer;list-style:none}
+.collapsible-panel>summary::-webkit-details-marker,.technical-fallback summary::-webkit-details-marker{display:none}
+.collapsible-panel>summary::after,.technical-fallback summary::after{content:"⌄";flex:0 0 auto;color:#b9d6e6;font-size:20px;font-weight:900;line-height:1;transition:transform .18s ease}
+.collapsible-panel[open]>summary::after,.technical-fallback[open] summary::after{transform:rotate(180deg)}
+.collapsible-panel:not([open]),.technical-fallback:not([open]){background:#071b2b66}
+.collapsible-panel:not([open])>*:not(summary),.technical-fallback:not([open])>*:not(summary){display:none}
+.collapsible-panel>summary button{position:relative;z-index:2}
+.technical-fallback summary{font-size:15px;font-weight:850;color:#b9d6e6}
+.technical-fallback summary::after{font-size:17px}
 .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .panel-heading h2{margin:0}
 label{display:block;margin:13px 0 6px;color:#d8e9f4;font-size:13px;font-weight:700}
@@ -188,6 +195,8 @@ button.compact{width:auto;padding:8px 10px;font-size:11px}
 .environment{padding:5px 8px;font-size:9px}
 .panel{margin:10px 0;padding:14px;border-radius:16px;box-shadow:0 10px 28px #00101f40}
 .panel h2{margin-bottom:9px;font-size:17px}
+.panel-title{font-size:17px}
+.collapsible-panel>summary,.technical-fallback summary{margin:0 0 10px}
 .panel-heading{align-items:flex-start}
 .panel-heading h2{margin:0}
 label{margin:9px 0 4px;font-size:11px}

@@ -6,7 +6,7 @@
 <title>Espaces — Backstage bêta</title>
 <meta name="theme-color" content="#102b45">
 <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-1">
+  <link rel="stylesheet" href="assets/css/administration.css?v=20260827-2">
 <link rel="stylesheet" href="assets/css/backstage-shell.css?v=20260716-1">
 </head>
 <body>
@@ -21,11 +21,11 @@
   </header>
 
   <div data-admin-section="notifications" hidden>
-  <section class="panel" aria-labelledby="formTitle">
-    <div class="panel-heading">
-      <h2 id="formTitle">Nouvelle alerte</h2>
+  <details class="panel collapsible-panel" open aria-labelledby="formTitle">
+    <summary class="panel-heading">
+      <span id="formTitle" class="panel-title">Nouvelle alerte</span>
       <button id="cancelEditBtn" class="secondary" type="button" hidden>Annuler</button>
-    </div>
+    </summary>
     <form id="alertForm">
       <input id="editingId" type="hidden">
       <label>Catégorie
@@ -68,38 +68,38 @@
       <p class="action-help"><strong>Publier</strong> : visible dans la PWA sans push. <strong>Envoyer</strong> : visible dans la PWA avec push. <strong>Programmer</strong> : invisible jusqu’à l’heure choisie, puis publié et poussé automatiquement.</p>
       <p id="formStatus" class="status" role="status"></p>
     </form>
-  </section>
+  </details>
 
-  <section class="panel" aria-labelledby="listTitle">
-    <div class="panel-heading">
-      <h2 id="listTitle">Alertes enregistrées</h2>
+  <details class="panel collapsible-panel" open aria-labelledby="listTitle">
+    <summary class="panel-heading">
+      <span id="listTitle" class="panel-title">Alertes enregistrées</span>
       <button id="refreshBtn" class="secondary" type="button">Actualiser</button>
-    </div>
+    </summary>
     <div class="alerts-scroll">
       <div id="alertsList" class="alerts-list">
       <p class="empty">Connectez le backend pour afficher les alertes.</p>
       </div>
     </div>
-  </section>
+  </details>
   </div>
 
   <section class="admin-section" data-admin-section="spaces">
-    <div class="panel spaces-overview">
-      <div class="panel-heading">
-        <h2>Espaces</h2>
+    <details class="panel collapsible-panel spaces-overview" open>
+      <summary class="panel-heading">
+        <span class="panel-title">Espaces</span>
         <button id="refreshSpacesBtn" class="secondary" type="button">Actualiser</button>
-      </div>
+      </summary>
       <p class="section-help">Touchez un statut pour le changer immédiatement. Le chevron ouvre tous les réglages.</p>
       <div id="spacePills" class="space-pills"></div>
       <p id="spaceListStatus" class="status" role="status"></p>
-    </div>
+    </details>
     <div id="spaceEditor" class="space-editor-overlay" hidden>
     <div class="space-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="spaceEditorTitle">
-    <div class="panel">
-      <div class="panel-heading">
-        <h2 id="spaceEditorTitle">Modifier l’espace</h2>
+    <details class="panel collapsible-panel" open>
+      <summary class="panel-heading">
+        <span id="spaceEditorTitle" class="panel-title">Modifier l’espace</span>
         <button id="closeSpaceEditorBtn" class="secondary" type="button">Fermer</button>
-      </div>
+      </summary>
       <select id="spaceSelect" hidden aria-label="Espace sélectionné"></select>
       <label>Texte personnalisé du statut
         <input id="spaceSpecial" maxlength="120" placeholder="Ex. Fermé pour entretien">
@@ -109,7 +109,7 @@
       </label>
       <button id="saveSpaceBtn" type="button">Enregistrer les informations</button>
       <p id="spaceStatusMessage" class="status" role="status"></p>
-    </div>
+    </details>
     <details class="panel technical-fallback">
       <summary>Base technique de cet espace</summary>
       <p class="section-help">Filet de sécurité technique. Au quotidien, utilisez la programmation de fond ou une exception ponctuelle.</p>
@@ -122,11 +122,11 @@
   </section>
 
   <section class="admin-section" data-admin-section="general" hidden>
-    <div class="panel">
-      <div class="panel-heading">
-        <h2>Programmation horaires</h2>
+    <details class="panel collapsible-panel" open>
+      <summary class="panel-heading">
+        <span class="panel-title">Programmation horaires</span>
         <button id="resetHourProgramBtn" class="secondary" type="button">Nouvelle</button>
-      </div>
+      </summary>
       <p class="section-help">Source normale de vérité : préparez une grille qui prend automatiquement le relais à partir d’une date précise.</p>
       <input id="hourProgramId" type="hidden">
       <label>Nom
@@ -169,14 +169,14 @@
         <button id="deleteHourProgramBtn" class="danger" type="button" hidden>Supprimer</button>
       </div>
       <p id="hourProgramStatus" class="status" role="status"></p>
-    </div>
-    <div class="panel">
-      <div class="panel-heading">
-        <h2>Programmations enregistrées</h2>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary class="panel-heading">
+        <span class="panel-title">Programmations enregistrées</span>
         <button id="refreshHourProgramsBtn" class="secondary" type="button">Actualiser</button>
-      </div>
+      </summary>
       <div id="hourProgramsList" class="hour-program-list"></div>
-    </div>
+    </details>
     <details class="panel technical-fallback">
       <summary>Base technique des écuries</summary>
       <p class="section-help">Filet de sécurité si aucune programmation n’existe. À ne modifier qu’en dépannage.</p>
@@ -184,8 +184,8 @@
       <button id="saveGeneralSchedulesBtn" type="button">Enregistrer les horaires des écuries</button>
       <p id="generalSchedulesStatus" class="status" role="status"></p>
     </details>
-    <div class="panel">
-      <h2>Exception ponctuelle horaires</h2>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Exception ponctuelle horaires</span></summary>
       <p class="section-help">Remplace l’horaire d’un seul jour, sans modifier la programmation de fond.</p>
       <div class="two-columns">
         <label>Date
@@ -219,13 +219,13 @@
       </div>
       <button id="saveHourExceptionBtn" type="button">Enregistrer l’exception horaire</button>
       <p id="hourExceptionStatusMessage" class="status" role="status"></p>
-    </div>
-    <div class="panel">
-      <h2>Exceptions horaires enregistrées</h2>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Exceptions horaires enregistrées</span></summary>
       <div id="hourExceptionsList" class="exceptions-list"></div>
-    </div>
-    <div class="panel">
-      <h2>Message exceptionnel page Horaires</h2>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Message exceptionnel page Horaires</span></summary>
       <p class="section-help">Texte ponctuel affiché sur la page Horaires, par exemple “Fermeture exceptionnelle”.</p>
       <label>Date
         <input id="exceptionDate" type="date">
@@ -235,28 +235,28 @@
       </label>
       <button id="saveExceptionBtn" type="button">Enregistrer l’exception</button>
       <p id="exceptionStatus" class="status" role="status"></p>
-    </div>
-    <div class="panel">
-      <h2>Exceptions enregistrées</h2>
+    </details>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Exceptions enregistrées</span></summary>
       <div id="exceptionsList" class="exceptions-list"></div>
-    </div>
+    </details>
   </section>
 
   <section class="admin-section" data-admin-section="home-alert" hidden>
-    <div class="panel">
-      <h2>Alerte affichée sur l’index</h2>
+    <details class="panel collapsible-panel" open>
+      <summary><span class="panel-title">Alerte affichée sur l’index</span></summary>
       <label>Texte de l’alerte
         <textarea id="homeAlertMessage" maxlength="500" rows="4" placeholder="Laisser vide pour masquer le bandeau"></textarea>
       </label>
       <label class="check"><input id="homeAlertUrgent" type="checkbox"> Alerte urgente</label>
       <button id="saveHomeAlertBtn" type="button">Enregistrer l’alerte d’accueil</button>
       <p id="homeAlertStatus" class="status" role="status"></p>
-    </div>
+    </details>
   </section>
 
   <section id="settingsPanel" class="admin-section" data-admin-section="settings" aria-labelledby="connectionTitle" hidden>
-    <div class="panel connection-panel">
-      <h2 id="connectionTitle">Connexion au backend bêta</h2>
+    <details class="panel collapsible-panel connection-panel" open>
+      <summary><span id="connectionTitle" class="panel-title">Connexion au backend bêta</span></summary>
       <p class="section-help">Ces réglages restent mémorisés uniquement sur cet appareil.</p>
       <label>Adresse de l’API
         <input id="apiUrl" type="url" inputmode="url" placeholder="https://…workers.dev">
@@ -267,18 +267,18 @@
       <button id="connectBtn" type="button">Enregistrer et se connecter</button>
       <button id="forgetTokenBtn" class="secondary forget-button" type="button">Oublier le jeton</button>
       <p id="connectionStatus" class="status" role="status"></p>
-    </div>
-    <div class="panel connection-panel" aria-labelledby="pushSettingsTitle">
-      <h2 id="pushSettingsTitle">Notifications du Backstage</h2>
+    </details>
+    <details class="panel collapsible-panel connection-panel" open aria-labelledby="pushSettingsTitle">
+      <summary><span id="pushSettingsTitle" class="panel-title">Notifications du Backstage</span></summary>
       <p class="section-help">Recevez immédiatement les nouvelles réservations, annulations, demandes, commandes et inscriptions.</p>
       <button id="enablePushBtn" class="push-settings-button" type="button">Activer les notifications</button>
       <p id="pushSettingsStatus" class="status" role="status"></p>
-    </div>
+    </details>
   </section>
 </main>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="assets/js/notification-format.js?v=20260716-2"></script>
-<script src="assets/js/administration.js?v=20260827-1"></script>
+<script src="assets/js/administration.js?v=20260827-2"></script>
 <script src="assets/js/backstage-push.js?v=20260716-2"></script>
 <script src="assets/js/status-realtime.js?v=20260716-2"></script>
 <script src="assets/js/backstage-shell.js?v=20260719-2"></script>
