@@ -92,9 +92,9 @@ test("l’onglet Liberté centralise les demandes sans supprimer leur rappel Pad
 test("l’accueil donne accès à Liberté, à la facturation et aux thèmes bêta",()=>{
   assert.match(home,/href="liberte\.html"/);
   assert.match(home,/href="billing\.html"/);
-  assert.match(home,/https:\/\/damiensiri\.github\.io\/push2-beta\/admin\.html/);
+  assert.match(home,/href="themes\.html"/);
   assert.match(shell,/\["À facturer","billing\.html"/);
-  assert.match(shell,/\["Thèmes","https:\/\/damiensiri\.github\.io\/push2-beta\/admin\.html"/);
+  assert.match(shell,/\["Thèmes","themes\.html"/);
 });
 
 test("la facturation consolidée reste sur Cloudflare D1 bêta",()=>{
