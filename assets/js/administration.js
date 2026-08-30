@@ -447,7 +447,7 @@
   function renderHourProgramGrid(entries=[]){
     if(!elements.hourProgramGrid)return;
     if(elements.applyAllPaddockHours)elements.applyAllPaddockHours.hidden=hourProgramScope!=="paddocks";
-    if(elements.hourProgramBulkStatusWrap)elements.hourProgramBulkStatusWrap.hidden=hourProgramScope!=="paddocks";
+    if(elements.hourProgramBulkStatusWrap)elements.hourProgramBulkStatusWrap.hidden=hourProgramScope==="general";
     const currentEntries=entries.length?entries:(hourProgramDrafts.get(hourProgramScope)||[]);
     elements.hourProgramGrid.replaceChildren();
     hourProgramTargets().forEach(target=>{
@@ -479,9 +479,14 @@
               <input data-field="selected" type="checkbox">
             </label>
             <strong>${label}</strong>
+            <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
+              <option value="ouvert">Ouvert</option>
+              <option value="ferme">Fermé</option>
+            </select>
             <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
             <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
           `;
+          line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
         }else{
           line.innerHTML=`
             <label class="program-day-check" aria-label="Sélectionner ${target.label} ${label}">
@@ -498,6 +503,8 @@
           `;
           line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
         }
+        syncHourProgramRowState(line);
+        line.querySelector('[data-field="manualStatus"]')?.addEventListener("change",()=>syncHourProgramRowState(line));
         card.appendChild(line);
       });
       elements.hourProgramGrid.appendChild(card);
@@ -508,17 +515,31 @@
     if(!elements.hourProgramGrid?.children.length)return[];
     return[...elements.hourProgramGrid.querySelectorAll(".hour-program-row")].map(row=>{
       const value=field=>row.querySelector(`[data-field="${field}"]`)?.value||"";
+      const manualStatus=value("manualStatus")||"ouvert";
       return{
         targetSlug:row.dataset.target,
         day:Number(row.dataset.day),
-        manualStatus:value("manualStatus")||"ouvert",
-        opensAt:value("opensAt"),
-        closesAt:value("closesAt"),
+        manualStatus,
+        opensAt:manualStatus==="ouvert"?value("opensAt"):"",
+        closesAt:manualStatus==="ouvert"?value("closesAt"):"",
         specialHours:value("specialHours"),
         info:value("info"),
         liberte:value("liberte"),
         longe:value("longe")
       };
+    });
+  }
+
+  function syncHourProgramRowState(row){
+    const status=row.querySelector('[data-field="manualStatus"]')?.value||"ouvert";
+    const disabled=status!=="ouvert";
+    row.classList.toggle("is-closed",disabled);
+    ["opensAt","closesAt"].forEach(field=>{
+      const input=row.querySelector(`[data-field="${field}"]`);
+      if(!input)return;
+      if(disabled)input.value="";
+      input.disabled=disabled;
+      input.required=!disabled;
     });
   }
 
@@ -558,6 +579,7 @@
         if(status)status.value=value.manualStatus;
         if(open)open.value=value.opensAt;
         if(close)close.value=value.closesAt;
+        syncHourProgramRowState(row);
       });
     });
     setStatus(elements.hourProgramStatus,"Grille du premier paddock appliquée aux 3 paddocks.","success");
@@ -586,6 +608,7 @@
       if(opensAt&&open)open.value=opensAt;
       if(closesAt&&close)close.value=closesAt;
       if(manualStatus&&status)status.value=manualStatus;
+      syncHourProgramRowState(row);
       const selected=row.querySelector('[data-field="selected"]');
       if(selected)selected.checked=false;
     });
@@ -1133,21 +1156,30 @@
     if(elements.hourExceptionScope.value==="general"&&elements.hourExceptionStatusSelect?.value==="hors-service"){
       elements.hourExceptionStatusSelect.value="ferme";
     }
+    syncHourExceptionFields();
   });
+  elements.hourExceptionStatusSelect?.addEventListener("change",syncHourExceptionFields);
+  function syncHourExceptionFields(){
+    const disabled=elements.hourExceptionStatusSelect?.value!=="ouvert";
+    [elements.hourExceptionOpen,elements.hourExceptionClose].forEach(input=>{
+      if(!input)return;
+      if(disabled)input.value="";
+      input.disabled=disabled;
+      input.required=!disabled;
+    });
+  }
+  syncHourExceptionFields();
   function normalizedHourExceptionPayload(){
     const manualStatus=elements.hourExceptionStatusSelect.value;
     const opensAt=String(elements.hourExceptionOpen.value||"").trim();
     const closesAt=String(elements.hourExceptionClose.value||"").trim();
-    const hasOpen=Boolean(opensAt);
-    const hasClose=Boolean(closesAt);
-    const isFullDayClosure=manualStatus==="ferme"&&!hasOpen&&!hasClose;
     return{
       date:elements.hourExceptionDate.value,
       scope:elements.hourExceptionScope.value,
       targetSlug:elements.hourExceptionTarget.value,
       manualStatus,
-      opensAt:isFullDayClosure?"":opensAt,
-      closesAt:isFullDayClosure?"":closesAt
+      opensAt:manualStatus==="ouvert"?opensAt:"",
+      closesAt:manualStatus==="ouvert"?closesAt:""
     };
   }
   elements.saveHourException?.addEventListener("click",async()=>{
