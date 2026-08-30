@@ -856,13 +856,17 @@
     });
   }
 
+  let refreshOperationsPromise=null;
   async function refreshOperations(){
+    if(refreshOperationsPromise)return refreshOperationsPromise;
     const config=settings();
-    [operations,publicStatuses]=await Promise.all([
+    refreshOperationsPromise=Promise.all([
       api("/api/admin/operations"),
       fetch(config.base+"/api/statuses",{cache:"no-store"}).then(response=>response.json())
-    ]);
-    renderOperations();
+    ]).then(([nextOperations,nextStatuses])=>{
+      operations=nextOperations; publicStatuses=nextStatuses; renderOperations();
+    }).finally(()=>{refreshOperationsPromise=null;});
+    return refreshOperationsPromise;
   }
 
   async function refreshOperationsWithFeedback(message="Données actualisées."){
