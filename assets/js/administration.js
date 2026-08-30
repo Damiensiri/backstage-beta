@@ -325,8 +325,11 @@
           info:space.info
         })
       });
-      await refreshOperations();
+      // Mise à jour optimiste : le clic doit être instantanément visible.
+      Object.assign(space,changes);
+      renderSpacePills();
       setStatus(elements.spaceListStatus,`${space.label} mis à jour.`,"success");
+      refreshOperations().catch(()=>{});
     }catch(error){setStatus(elements.spaceListStatus,error.message,"error");}
   }
 
