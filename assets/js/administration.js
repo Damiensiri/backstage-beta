@@ -1134,19 +1134,28 @@
       elements.hourExceptionStatusSelect.value="ferme";
     }
   });
+  function normalizedHourExceptionPayload(){
+    const manualStatus=elements.hourExceptionStatusSelect.value;
+    const opensAt=String(elements.hourExceptionOpen.value||"").trim();
+    const closesAt=String(elements.hourExceptionClose.value||"").trim();
+    const hasOpen=Boolean(opensAt);
+    const hasClose=Boolean(closesAt);
+    const isFullDayClosure=manualStatus==="ferme"&&!hasOpen&&!hasClose;
+    return{
+      date:elements.hourExceptionDate.value,
+      scope:elements.hourExceptionScope.value,
+      targetSlug:elements.hourExceptionTarget.value,
+      manualStatus,
+      opensAt:isFullDayClosure?"":opensAt,
+      closesAt:isFullDayClosure?"":closesAt
+    };
+  }
   elements.saveHourException?.addEventListener("click",async()=>{
     setStatus(elements.hourExceptionStatusMessage,"Enregistrement…");
     try{
       await api("/api/admin/hour-exceptions",{
         method:"POST",
-        body:JSON.stringify({
-          date:elements.hourExceptionDate.value,
-          scope:elements.hourExceptionScope.value,
-          targetSlug:elements.hourExceptionTarget.value,
-          manualStatus:elements.hourExceptionStatusSelect.value,
-          opensAt:elements.hourExceptionOpen.value,
-          closesAt:elements.hourExceptionClose.value
-        })
+        body:JSON.stringify(normalizedHourExceptionPayload())
       });
       await refreshOperations();
       setStatus(elements.hourExceptionStatusMessage,"Exception horaire enregistrée.","success");
