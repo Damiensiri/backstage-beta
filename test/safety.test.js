@@ -53,6 +53,10 @@ test("masquer un cheval du planning conserve ses activités",()=>{
   assert.match(planningScript,/Masquer ce cheval pour cette semaine/);
   assert.doesNotMatch(planningScript,/supprimer ses .*tâche/);
   assert.match(planningScript,/horseId:Number\(\$\('horseName'\)\.value\)/);
+  assert.match(planningPage,/id="horseFilter"/);
+  assert.match(planningScript,/horse_ids=/);
+  assert.match(planningScript,/FILTER_KEY/);
+  assert.match(planningScript,/startField'\)\.hidden=false/);
 });
 
 test("chaque action paddock sensible appelle l’API D1 bêta",()=>{
