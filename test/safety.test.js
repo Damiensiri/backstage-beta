@@ -19,6 +19,10 @@ const homeSummary=fs.readFileSync("assets/js/home-summary.js","utf8");
 const staff=fs.readFileSync("staff.html","utf8");
 const staffScript=fs.readFileSync("assets/js/staff.js","utf8");
 const staffStyles=fs.readFileSync("assets/css/staff.css","utf8");
+const horsesPage=fs.readFileSync("horses.html","utf8");
+const horsesScript=fs.readFileSync("assets/js/horses.js","utf8");
+const planningPage=fs.readFileSync("planning.html","utf8");
+const planningScript=fs.readFileSync("assets/js/planning.js","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
@@ -31,6 +35,24 @@ test("les comptes utilisent uniquement le Worker Cloudflare bêta",()=>{
   assert.doesNotMatch(users,/prod|firebase/i);
   assert.match(usersPage,/BÊTA · D1/);
   assert.match(shell,/\["Utilisateurs","users\.html"/);
+});
+
+test("la fiche CHEVAUX reste sur la bêta et protège ses écritures",()=>{
+  assert.match(shell,/\["Chevaux","horses\.html"/);
+  assert.match(horsesPage,/id="horseForm"/);
+  assert.match(horsesPage,/Remarques administratives privées/);
+  assert.match(horsesScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.match(horsesScript,/api\/admin\/horses/);
+  assert.match(horsesScript,/'if-match':String\(current\.version\)/);
+  assert.match(horsesScript,/ownerIds:owners\.map/);
+  assert.doesNotMatch(horsesPage+horsesScript,/firebase|ecurie-notifications-prod/i);
+});
+
+test("masquer un cheval du planning conserve ses activités",()=>{
+  assert.match(planningPage,/Gérer les chevaux/);
+  assert.match(planningScript,/Masquer ce cheval pour cette semaine/);
+  assert.doesNotMatch(planningScript,/supprimer ses .*tâche/);
+  assert.match(planningScript,/horseId:Number\(\$\('horseName'\)\.value\)/);
 });
 
 test("chaque action paddock sensible appelle l’API D1 bêta",()=>{
