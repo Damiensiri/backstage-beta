@@ -327,11 +327,8 @@
           info:space.info
         })
       });
-      // Mise à jour optimiste : le clic doit être instantanément visible.
-      Object.assign(space,changes);
-      renderSpacePills();
+      await refreshOperations();
       setStatus(elements.spaceListStatus,`${space.label} mis à jour.`,"success");
-      refreshOperations().catch(()=>{});
     }catch(error){setStatus(elements.spaceListStatus,error.message,"error");}
   }
 
@@ -452,7 +449,7 @@
   function renderHourProgramGrid(entries=[]){
     if(!elements.hourProgramGrid)return;
     if(elements.applyAllPaddockHours)elements.applyAllPaddockHours.hidden=hourProgramScope!=="paddocks";
-    if(elements.hourProgramBulkStatusWrap)elements.hourProgramBulkStatusWrap.hidden=hourProgramScope==="general";
+    if(elements.hourProgramBulkStatusWrap)elements.hourProgramBulkStatusWrap.hidden=hourProgramScope!=="paddocks";
     const currentEntries=entries.length?entries:(hourProgramDrafts.get(hourProgramScope)||[]);
     elements.hourProgramGrid.replaceChildren();
     hourProgramTargets().forEach(target=>{
@@ -484,14 +481,9 @@
               <input data-field="selected" type="checkbox">
             </label>
             <strong>${label}</strong>
-            <select data-field="manualStatus" aria-label="Statut ${target.label} ${label}">
-              <option value="ouvert">Ouvert</option>
-              <option value="ferme">Fermé</option>
-            </select>
             <input data-field="opensAt" type="time" value="${esc(row.opensAt)}" aria-label="Ouverture ${target.label} ${label}">
             <input data-field="closesAt" type="time" value="${esc(row.closesAt)}" aria-label="Fermeture ${target.label} ${label}">
           `;
-          line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
         }else{
           line.innerHTML=`
             <label class="program-day-check" aria-label="Sélectionner ${target.label} ${label}">
@@ -508,8 +500,6 @@
           `;
           line.querySelector('[data-field="manualStatus"]').value=row.manualStatus||"ouvert";
         }
-        syncHourProgramRowState(line);
-        line.querySelector('[data-field="manualStatus"]')?.addEventListener("change",()=>syncHourProgramRowState(line));
         card.appendChild(line);
       });
       elements.hourProgramGrid.appendChild(card);
@@ -520,31 +510,17 @@
     if(!elements.hourProgramGrid?.children.length)return[];
     return[...elements.hourProgramGrid.querySelectorAll(".hour-program-row")].map(row=>{
       const value=field=>row.querySelector(`[data-field="${field}"]`)?.value||"";
-      const manualStatus=value("manualStatus")||"ouvert";
       return{
         targetSlug:row.dataset.target,
         day:Number(row.dataset.day),
-        manualStatus,
-        opensAt:manualStatus==="ouvert"?value("opensAt"):"",
-        closesAt:manualStatus==="ouvert"?value("closesAt"):"",
+        manualStatus:value("manualStatus")||"ouvert",
+        opensAt:value("opensAt"),
+        closesAt:value("closesAt"),
         specialHours:value("specialHours"),
         info:value("info"),
         liberte:value("liberte"),
         longe:value("longe")
       };
-    });
-  }
-
-  function syncHourProgramRowState(row){
-    const status=row.querySelector('[data-field="manualStatus"]')?.value||"ouvert";
-    const disabled=status!=="ouvert";
-    row.classList.toggle("is-closed",disabled);
-    ["opensAt","closesAt"].forEach(field=>{
-      const input=row.querySelector(`[data-field="${field}"]`);
-      if(!input)return;
-      if(disabled)input.value="";
-      input.disabled=disabled;
-      input.required=!disabled;
     });
   }
 
@@ -584,7 +560,6 @@
         if(status)status.value=value.manualStatus;
         if(open)open.value=value.opensAt;
         if(close)close.value=value.closesAt;
-        syncHourProgramRowState(row);
       });
     });
     setStatus(elements.hourProgramStatus,"Grille du premier paddock appliquée aux 3 paddocks.","success");
@@ -613,7 +588,6 @@
       if(opensAt&&open)open.value=opensAt;
       if(closesAt&&close)close.value=closesAt;
       if(manualStatus&&status)status.value=manualStatus;
-      syncHourProgramRowState(row);
       const selected=row.querySelector('[data-field="selected"]');
       if(selected)selected.checked=false;
     });
@@ -860,17 +834,13 @@
     });
   }
 
-  let refreshOperationsPromise=null;
   async function refreshOperations(){
-    if(refreshOperationsPromise)return refreshOperationsPromise;
     const config=settings();
-    refreshOperationsPromise=Promise.all([
+    [operations,publicStatuses]=await Promise.all([
       api("/api/admin/operations"),
       fetch(config.base+"/api/statuses",{cache:"no-store"}).then(response=>response.json())
-    ]).then(([nextOperations,nextStatuses])=>{
-      operations=nextOperations; publicStatuses=nextStatuses; renderOperations();
-    }).finally(()=>{refreshOperationsPromise=null;});
-    return refreshOperationsPromise;
+    ]);
+    renderOperations();
   }
 
   async function refreshOperationsWithFeedback(message="Données actualisées."){
@@ -935,7 +905,7 @@
       badges.append(
         badge(alert.active==="oui"?"Publiée":"Inactive",alert.active==="oui"?"active":"inactive"),
         badge(alert.epingle==="oui"?"Épinglée":"Non épinglée"),
-        badge(alert.push_sent_at?"Push envoyé":alert.push_requested?"Push en attente (bêta)":"Sans push")
+        badge(alert.push_sent_at?"Push envoyé":alert.push_requested?"Push en attente":"Sans push")
       );
       if(schedule){
         const label=schedule.status==="sent"?"Programmation envoyée":
@@ -1040,7 +1010,7 @@
         sent:"Alerte enregistrée et push envoyé.",
         "already-sent":"Alerte enregistrée. Le push avait déjà été envoyé.",
         "not-requested":"Alerte enregistrée sans push.",
-        "disabled-in-beta":"Alerte enregistrée. Le push bêta n’est pas encore activé.",
+        "disabled-in-production":"Alerte enregistrée. Le push bêta n’est pas activé.",
         scheduled:"Alerte programmée. Elle restera invisible jusqu’à l’heure prévue.",
         failed:`Alerte enregistrée, mais le push a échoué${result.push?.error?" : "+result.push.error:"."}`
       };
@@ -1072,7 +1042,7 @@
       notifications:{title:"Notifications",subtitle:"Publication des informations et envoi des notifications push."},
       general:{title:"Horaires",subtitle:"Horaires des écuries et exceptions de date."},
       "home-alert":{title:"Alertes",subtitle:"Bandeau d’information affiché sur l’accueil de la PWA."},
-      settings:{title:"Paramètres",subtitle:"Connexion sécurisée au backend de la bêta."}
+      settings:{title:"Paramètres",subtitle:"Connexion sécurisée au backend de bêta."}
     };
     const selectedName=sections[name]?name:"spaces";
     document.body.classList.toggle("admin-section-spaces",selectedName==="spaces");
@@ -1174,38 +1144,20 @@
     if(elements.hourExceptionScope.value==="general"&&elements.hourExceptionStatusSelect?.value==="hors-service"){
       elements.hourExceptionStatusSelect.value="ferme";
     }
-    syncHourExceptionFields();
   });
-  elements.hourExceptionStatusSelect?.addEventListener("change",syncHourExceptionFields);
-  function syncHourExceptionFields(){
-    const disabled=elements.hourExceptionStatusSelect?.value!=="ouvert";
-    [elements.hourExceptionOpen,elements.hourExceptionClose].forEach(input=>{
-      if(!input)return;
-      if(disabled)input.value="";
-      input.disabled=disabled;
-      input.required=!disabled;
-    });
-  }
-  syncHourExceptionFields();
-  function normalizedHourExceptionPayload(){
-    const manualStatus=elements.hourExceptionStatusSelect.value;
-    const opensAt=String(elements.hourExceptionOpen.value||"").trim();
-    const closesAt=String(elements.hourExceptionClose.value||"").trim();
-    return{
-      date:elements.hourExceptionDate.value,
-      scope:elements.hourExceptionScope.value,
-      targetSlug:elements.hourExceptionTarget.value,
-      manualStatus,
-      opensAt:manualStatus==="ouvert"?opensAt:"",
-      closesAt:manualStatus==="ouvert"?closesAt:""
-    };
-  }
   elements.saveHourException?.addEventListener("click",async()=>{
     setStatus(elements.hourExceptionStatusMessage,"Enregistrement…");
     try{
       await api("/api/admin/hour-exceptions",{
         method:"POST",
-        body:JSON.stringify(normalizedHourExceptionPayload())
+        body:JSON.stringify({
+          date:elements.hourExceptionDate.value,
+          scope:elements.hourExceptionScope.value,
+          targetSlug:elements.hourExceptionTarget.value,
+          manualStatus:elements.hourExceptionStatusSelect.value,
+          opensAt:elements.hourExceptionOpen.value,
+          closesAt:elements.hourExceptionClose.value
+        })
       });
       await refreshOperations();
       setStatus(elements.hourExceptionStatusMessage,"Exception horaire enregistrée.","success");

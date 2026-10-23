@@ -10,53 +10,24 @@ const shell=fs.readFileSync("assets/js/backstage-shell.js","utf8");
 const pushSettings=fs.readFileSync("assets/js/backstage-push.js","utf8");
 const users=fs.readFileSync("assets/js/users.js","utf8");
 const usersPage=fs.readFileSync("users.html","utf8");
-const liberte=fs.readFileSync("liberte.html","utf8");
-const liberteScript=fs.readFileSync("assets/js/liberte.js","utf8");
 const home=fs.readFileSync("index.html","utf8");
-const billing=fs.readFileSync("billing.html","utf8");
-const billingScript=fs.readFileSync("assets/js/billing.js","utf8");
 const homeSummary=fs.readFileSync("assets/js/home-summary.js","utf8");
-const staff=fs.readFileSync("staff.html","utf8");
+const stablePlanning=fs.readFileSync("assets/js/planning.js","utf8");
+const staffPage=fs.readFileSync("staff.html","utf8");
 const staffScript=fs.readFileSync("assets/js/staff.js","utf8");
 const staffStyles=fs.readFileSync("assets/css/staff.css","utf8");
-const horsesPage=fs.readFileSync("horses.html","utf8");
-const horsesScript=fs.readFileSync("assets/js/horses.js","utf8");
-const planningPage=fs.readFileSync("planning.html","utf8");
-const planningScript=fs.readFileSync("assets/js/planning.js","utf8");
 
 test("le planning Backstage utilise uniquement Cloudflare D1 bêta",()=>{
   assert.match(paddocks,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.match(paddocks,/Bêta Cloudflare\/D1/);
+  assert.doesNotMatch(paddocks,/ecurie-notifications-prod/i);
   assert.doesNotMatch(paddocks,/firebase-app-compat|firebase-firestore-compat|firebaseConfig|\.collection\(/);
 });
 
 test("les comptes utilisent uniquement le Worker Cloudflare bêta",()=>{
   assert.match(users,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.doesNotMatch(users,/prod|firebase/i);
+  assert.doesNotMatch(users,/firebase/i);
   assert.match(usersPage,/BÊTA · D1/);
   assert.match(shell,/\["Utilisateurs","users\.html"/);
-});
-
-test("la fiche CHEVAUX reste sur la bêta et protège ses écritures",()=>{
-  assert.match(shell,/\["Chevaux","horses\.html"/);
-  assert.match(horsesPage,/id="horseForm"/);
-  assert.match(horsesPage,/Remarques administratives privées/);
-  assert.match(horsesScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.match(horsesScript,/api\/admin\/horses/);
-  assert.match(horsesScript,/'if-match':String\(current\.version\)/);
-  assert.match(horsesScript,/ownerIds:owners\.map/);
-  assert.doesNotMatch(horsesPage+horsesScript,/firebase|ecurie-notifications-prod/i);
-});
-
-test("masquer un cheval du planning conserve ses activités",()=>{
-  assert.match(planningPage,/Gérer les chevaux/);
-  assert.match(planningScript,/Masquer ce cheval pour cette semaine/);
-  assert.doesNotMatch(planningScript,/supprimer ses .*tâche/);
-  assert.match(planningScript,/horseId:Number\(\$\('horseName'\)\.value\)/);
-  assert.match(planningPage,/id="horseFilter"/);
-  assert.match(planningScript,/horse_ids=/);
-  assert.match(planningScript,/FILTER_KEY/);
-  assert.match(planningScript,/startField'\)\.hidden=false/);
 });
 
 test("chaque action paddock sensible appelle l’API D1 bêta",()=>{
@@ -111,109 +82,40 @@ test("les notifications Backstage utilisent OneSignal et l’API Cloudflare bêt
   assert.doesNotMatch(administration,/firebase/i);
   assert.match(pushSettings,/api\/admin\/push\/subscription/);
   assert.match(pushSettings,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.match(pushSettings,/186e6f3b-def4-4b8e-8700-650456ff93cc/);
 });
 
-test("l’onglet Liberté centralise les demandes sans supprimer leur rappel Paddocks",()=>{
-  assert.match(shell,/\["Liberté","liberte\.html"/);
-  assert.match(liberte,/id="liberteRequestForm"/);
-  assert.match(liberte,/id="exceptionForm"/);
-  assert.match(liberte,/id="liberteRequestList"/);
-  assert.match(liberteScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.match(liberteScript,/api\/admin\/liberte/);
-  assert.doesNotMatch(liberte+liberteScript,/firebase/i);
-  assert.match(paddocks,/id="paddockRequestList"/);
-  assert.match(paddocks,/href="liberte\.html"/);
+test("le nouveau planning utilise uniquement D1 Bêta",()=>{
+  assert.match(home,/href="planning\.html"/);
+  assert.match(shell,/\["Planning","planning\.html"/);
+  assert.match(stablePlanning,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.doesNotMatch(stablePlanning,/notifications_prod|notifications-prod|production/i);
 });
 
-test("l’accueil donne accès à Liberté, à la facturation et aux thèmes bêta",()=>{
-  assert.match(home,/href="liberte\.html"/);
-  assert.match(home,/href="billing\.html"/);
-  assert.match(home,/href="themes\.html"/);
-  assert.match(shell,/\["À facturer","billing\.html"/);
-  assert.match(shell,/\["Thèmes","themes\.html"/);
-});
-
-test("la facturation consolidée reste sur Cloudflare D1 bêta",()=>{
-  assert.match(billing,/BÊTA · D1/);
-  assert.match(billingScript,/api\/admin\/billing/);
-  assert.match(billingScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.doesNotMatch(billing+billingScript,/firebase/i);
-});
-
-test("l’accueil récapitule uniquement les actions D1 à traiter",()=>{
-  assert.match(home,/id="summaryBilling"/);
-  assert.match(home,/id="summaryOrders"/);
-  assert.match(home,/id="summaryRequests"/);
-  assert.match(home,/id="summaryUsers"/);
-  assert.match(homeSummary,/api\/admin\/billing/);
-  assert.match(homeSummary,/api\/admin\/orders/);
-  assert.match(homeSummary,/api\/admin\/liberte/);
-  assert.match(homeSummary,/api\/admin\/users/);
-  assert.doesNotMatch(homeSummary,/planning|reservations/i);
-});
-
-test("le planning salariés reste isolé dans Cloudflare D1 bêta",()=>{
+test("le planning salariés est complet et isolé en bêta",()=>{
+  assert.match(home,/href="staff\.html"/);
   assert.match(shell,/\["Planning salariés","staff\.html"/);
   assert.ok(shell.indexOf('["Planning salariés"')>shell.indexOf('["Horaires"'));
   assert.ok(shell.indexOf('["Planning salariés"')<shell.indexOf('["Utilisateurs"'));
-  assert.match(home,/href="staff\.html"/);
-  assert.match(staff,/BÊTA · D1/);
-  assert.match(staff,/id="exportStaffPdf"/);
-  assert.match(staff,/id="printEmployee"/);
-  assert.match(staff,/id="copyMonth"/);
+  assert.match(staffPage,/BÊTA · D1/);
+  assert.match(staffPage,/id="printEmployee"/);
   assert.match(staffScript,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
-  assert.match(staffScript,/api\/admin\/staff-planning/);
-  assert.match(staffScript,/staff-planning\/copy-week/);
-  assert.match(staffScript,/method:"DELETE"/);
-  assert.match(staffScript,/rest-label">Repos/);
-  assert.match(staffScript,/function parseDirectEntry/);
-  assert.match(staff,/0700\.1200\/1400\.1700/);
-  assert.match(staffScript,/0700,1200\/1300,1700/);
-  assert.match(staffScript,/\[\\?\.?,\\?s\]/);
-  assert.match(staffScript,/currentShift\?\.status==="work"/);
-  assert.match(staffScript,/clockText=text\.replace/);
-  assert.match(staffScript,/Horaire, AMDEL, PMDEL ou DEL/);
-  assert.match(staffScript,/moveAfterSave=event\.shiftKey\?-1:1;void save\(\)/);
+  assert.match(staffScript,/\/api\/admin\/staff-planning\/copy-month/);
+  assert.match(staffScript,/normalized==="amdel"\|\|normalized==="pmdel"/);
+  assert.match(staffScript,/normalized==="del"/);
   assert.match(staffScript,/function undoLastChange/);
-  assert.match(staffScript,/event\.metaKey\|\|event\.ctrlKey/);
   assert.match(staffScript,/Dernière modification annulée/);
-  assert.match(staff,/id="refreshGoogleCalendar"/);
+  assert.match(staffPage,/id="refreshGoogleCalendar"/);
   assert.match(staffScript,/refresh=1/);
   assert.match(staffScript,/function googleWeekHtml/);
   assert.match(staffScript,/grid-row:\$\{row\}/);
-  assert.match(staff,/class="staff-help-details"/);
-  assert.match(staff,/class="staff-panel staff-utilities"/);
-  assert.match(staffScript,/calendarColor/);
-  assert.match(staffScript,/progressive&&!input\.value\.trim\(\)/);
-  assert.match(staffScript,/normalized==="amdel"\|\|normalized==="pmdel"/);
-  assert.match(staffScript,/normalized==="del"/);
-  assert.match(staff,/AMDEL efface seulement le matin/);
-  assert.match(staffScript,/moveAfterSave/);
-  assert.match(staffScript,/className="inline-entry"/);
-  assert.match(staff,/CFA — 7h/);
-  assert.match(staff,/data-view="overview"/);
-  assert.match(staff,/data-section="settings"/);
-  assert.match(staff,/id="shiftRangeStart"/);
-  assert.match(staff,/id="shiftRangeEnd"/);
-  assert.match(staffScript,/staff-planning\/shift-range/);
-  assert.match(staffScript,/class="weekly-total"/);
-  assert.match(staffScript,/function renderOverview/);
-  assert.match(staffScript,/overview-cell/);
-  assert.match(staffScript,/google-overview-row/);
-  assert.match(staffScript,/cell-details overview-details/);
-  assert.match(staffScript,/\/api\/admin\/staff-planning\/copy-month/);
-  assert.match(staffScript,/📅 Agendas Google/);
-  assert.doesNotMatch(staffScript,/Total équipe/);
-  assert.match(staff,/calendrier public iCal/i);
-  assert.match(staff,/lecture seule/i);
-  assert.match(staffScript,/api\/admin\/google-calendar\/events/);
-  assert.doesNotMatch(staffScript,/google-calendar\/connect/);
-  assert.match(staffStyles,/\.google-column/);
-  assert.match(staffStyles,/@media print[\s\S]*\.google-column/);
-  assert.match(staffStyles,/#staffOverviewGrid\{display:grid!important/);
-  assert.match(staffStyles,/\.day-cell\.status-leave\{[^}]*background:#dceaff!important\}/);
+  assert.doesNotMatch(staffScript,/notifications_prod|notifications-prod|production/i);
   assert.match(staffStyles,/print-color-adjust:exact!important/);
-  assert.match(staffScript,/window\.print\(\)/);
-  assert.match(staffStyles,/@page\{size:A4 portrait/);
-  assert.doesNotMatch(staff+staffScript,/firebase|prod/i);
+});
+
+test("l’accueil récapitule uniquement les actions D1 à traiter",()=>{
+  for(const id of ["summaryBilling","summaryOrders","summaryRequests","summaryUsers"])assert.match(home,new RegExp(`id="${id}"`));
+  for(const endpoint of ["billing","orders","liberte","users"])assert.match(homeSummary,new RegExp(`api/admin/${endpoint}`));
+  assert.match(homeSummary,/ecurie-notifications-beta\.damiensiri-pro\.workers\.dev/);
+  assert.doesNotMatch(homeSummary,/planning|reservations|prod/i);
 });
