@@ -81,6 +81,16 @@ test("l’administration utilise uniquement Cloudflare bêta",()=>{
   assert.match(administration,/>BÊTA</);
 });
 
+test("l’alerte temporaire conserve les horaires et accepte période et couleur",()=>{
+  assert.match(administration,/Alerte temporaire d’accueil/);
+  assert.match(administration,/id="exceptionEndDate"/);
+  assert.match(administration,/id="exceptionColor"/);
+  assert.match(administration,/<option value="orange">Orange<\/option>/);
+  assert.match(administration,/<option value="red">Rouge<\/option>/);
+  assert.match(adminScript,/endDate:elements\.exceptionEndDate\.value/);
+  assert.match(adminScript,/color:elements\.exceptionColor\.value/);
+});
+
 test("la navigation et les paramètres ne sont pas dupliqués",()=>{
   assert.doesNotMatch(administration,/class="admin-tabs"/);
   assert.match(administration,/data-admin-section="settings"/);
